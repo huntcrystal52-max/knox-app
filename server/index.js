@@ -19,6 +19,8 @@ app.use(
   })
 );
 
+app.set('trust proxy', 1);
+
 app.use(
   session({
     store: new PgSession({ pool, createTableIfMissing: true }),
@@ -27,8 +29,8 @@ app.use(
     saveUninitialized: false,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
     },
   })
 );
