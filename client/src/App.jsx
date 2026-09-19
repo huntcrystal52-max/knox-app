@@ -4,6 +4,10 @@ import Nav from './components/Nav.jsx';
 import Login from './components/Login.jsx';
 import Home from './rooms/Home.jsx';
 
+// New rooms get their own <Route> added here as they're built, e.g.:
+//   import LoveNotes from './rooms/LoveNotes.jsx';
+//   <Route path="/love-notes" element={<LoveNotes user={user} />} />
+
 export default function App() {
   const { user, loading } = useAuth();
 
@@ -20,7 +24,7 @@ export default function App() {
       <Nav />
       <main className="main">
         <Routes>
-          <Route path="/" element={<Home user={user} />} />
+          <Route path="/" element={<Home />} />
         </Routes>
       </main>
     </div>
