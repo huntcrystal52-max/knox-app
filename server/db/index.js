@@ -57,5 +57,25 @@ export async function runMigrations() {
     ALTER TABLE room_content ADD COLUMN IF NOT EXISTS user_reply_emoji TEXT;
   `);
 
+  // Build room: each row is one self-contained thing Knox has made — either
+  // on his own or because she asked. `code` is an HTML/CSS/JS fragment,
+  // rendered in a locked-down sandboxed iframe on the frontend (not stored
+  // in room_content since a build needs more structure than a text entry).
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS build_projects (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      code TEXT NOT NULL,
+      prompt TEXT,
+      author TEXT NOT NULL DEFAULT 'Knox',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS build_projects_created_idx ON build_projects (created_at DESC);
+  `);
+
   console.log('Database ready.');
 }
