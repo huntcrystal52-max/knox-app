@@ -10,6 +10,8 @@ function requireLogin(req, res, next) {
   next();
 }
 
+const ENTRY_COLUMNS = 'id, room, author, kind, body, media_url, knox_reaction, user_reply, created_at';
+
 // Every simple content room (love notes, images, sacred, stillness) reads
 // and writes through these same two routes, just with a different `room`
 // name — that's what makes them cheap to add later. The build room and
@@ -19,7 +21,7 @@ function requireLogin(req, res, next) {
 router.get('/:room', requireLogin, async (req, res) => {
   const { room } = req.params;
   const { rows } = await pool.query(
-    `SELECT id, room, author, kind, body, media_url, knox_reaction, created_at
+    `SELECT ${ENTRY_COLUMNS}
      FROM room_content
      WHERE room = $1
      ORDER BY created_at DESC
@@ -37,7 +39,7 @@ router.post('/:room', requireLogin, async (req, res) => {
   const { rows } = await pool.query(
     `INSERT INTO room_content (room, author, kind, body, media_url)
      VALUES ($1, $2, $3, $4, $5)
-     RETURNING id, room, author, kind, body, media_url, knox_reaction, created_at`,
+     RETURNING ${ENTRY_COLUMNS}`,
     [room, req.session.user.username, kind, body, media_url]
   );
 
@@ -91,7 +93,7 @@ router.post('/:room/:id/react', requireLogin, async (req, res) => {
     const updated = await pool.query(
       `UPDATE room_content SET knox_reaction = $1
        WHERE id = $2
-       RETURNING id, room, author, kind, body, media_url, knox_reaction, created_at`,
+       RETURNING ${ENTRY_COLUMNS}`,
       [reaction, id]
     );
 
@@ -100,6 +102,30 @@ router.post('/:room/:id/react', requireLogin, async (req, res) => {
     console.error('Error reaching Knox-bot for a reaction:', err);
     res.status(502).json({ error: 'Could not reach Knox.' });
   }
+});
+
+// POST /api/rooms/:room/:id/reply -> her reply to an entry Knox left on his
+// own (author = 'Knox', e.g. an autonomous love note). This is just a plain
+// write — no round trip to Knox-bot needed, since it's her words, not his.
+router.post('/:room/:id/reply', requireLogin, async (req, res) => {
+  const { room, id } = req.params;
+  const { text } = req.body || {};
+  if (!text || typeof text !== 'string' || !text.trim()) {
+    return res.status(400).json({ error: 'text is required' });
+  }
+
+  const { rows } = await pool.query(
+    `UPDATE room_content SET user_reply = $1
+     WHERE id = $2 AND room = $3
+     RETURNING ${ENTRY_COLUMNS}`,
+    [text.trim(), id, room]
+  );
+
+  if (!rows[0]) {
+    return res.status(404).json({ error: 'Entry not found.' });
+  }
+
+  res.json({ entry: rows[0] });
 });
 
 export default router;
