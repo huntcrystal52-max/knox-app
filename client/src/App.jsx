@@ -7,6 +7,7 @@ import LoveNotes from './rooms/LoveNotes.jsx';
 import Sacred from './rooms/Sacred.jsx';
 import Stillness from './rooms/Stillness.jsx';
 import Images from './rooms/Images.jsx';
+import Build from './rooms/Build.jsx';
 
 // New rooms get their own <Route> added here as they're built.
 
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="/sacred" element={<Sacred />} />
           <Route path="/stillness" element={<Stillness />} />
           <Route path="/images" element={<Images />} />
+          <Route path="/build" element={<Build />} />
         </Routes>
       </main>
     </div>
