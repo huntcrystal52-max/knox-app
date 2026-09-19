@@ -3,8 +3,23 @@ import { v2 as cloudinary } from 'cloudinary';
 
 const router = Router();
 
-// cloudinary reads CLOUDINARY_URL from the environment automatically —
-// nothing to configure here as long as that variable is set on this service.
+// Configured explicitly from three plain variables rather than relying on
+// Cloudinary auto-parsing a single CLOUDINARY_URL string — that combined
+// format is easy to mangle by hand (a stray space, a leftover character),
+// and it silently produces this exact "Invalid Signature" error with no
+// clearer clue. Three separate values are simpler to copy correctly.
+// .trim() guards against a stray trailing space or newline sneaking in from
+// a mobile copy-paste — invisible in the Railway variable field, but enough
+// to break the signature check.
+cloudinary.config({
+  cloud_name: (process.env.CLOUDINARY_CLOUD_NAME || '').trim(),
+  api_key: (process.env.CLOUDINARY_API_KEY || '').trim(),
+  api_secret: (process.env.CLOUDINARY_API_SECRET || '').trim(),
+});
+
+if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+  console.log('[UPLOAD] Warning: one or more Cloudinary env vars are missing (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET).');
+}
 
 function requireLogin(req, res, next) {
   if (!req.session.user) {
