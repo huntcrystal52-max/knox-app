@@ -38,4 +38,8 @@ export const api = {
   // entry in a room and leave a reaction on it — used right after
   // posting/uploading, and from an "Ask Knox" button on older entries.
   reactToEntry: (room, id) => request(`/api/rooms/${room}/${id}/react`, { method: 'POST' }),
+
+  // Her reply to an entry Knox left on his own (e.g. an autonomous love note).
+  replyToEntry: (room, id, text) =>
+    request(`/api/rooms/${room}/${id}/reply`, { method: 'POST', body: JSON.stringify({ text }) }),
 };
