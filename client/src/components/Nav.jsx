@@ -1,12 +1,15 @@
 import { NavLink } from 'react-router-dom';
 
+// The single list of rooms the app knows about. Adding a new room later is:
+// 1. add a line here, 2. add a matching <Route> in App.jsx, 3. add the room
+// file in src/rooms/. Nothing else about the shell needs to change.
 export const ROOMS = [
   { path: '/', label: 'Home' },
+  { path: '/love-notes', label: 'Love Notes' },
+  { path: '/sacred', label: 'Sacred' },
+  { path: '/stillness', label: 'Stillness' },
   // Added one at a time as each room gets built:
-  // { path: '/love-notes', label: 'Love Notes' },
   // { path: '/images', label: 'Images' },
-  // { path: '/sacred', label: 'Sacred' },
-  // { path: '/stillness', label: 'Stillness' },
   // { path: '/build', label: 'Build' },
   // { path: '/wearable', label: 'Wearable' },
 ];
