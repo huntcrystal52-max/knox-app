@@ -59,6 +59,8 @@ export default function Images() {
       setPreview(null);
       setCaption('');
       if (fileInputRef.current) fileInputRef.current.value = '';
+      // Let Knox react on his own, in the background — the upload itself
+      // doesn't wait on this, so a slow vision call never blocks the form.
       askKnox(data.entry.id);
     } catch (err) {
       // Leave the preview and caption in place so nothing's lost if this fails.
@@ -106,12 +108,15 @@ export default function Images() {
                 {entry.author} — {new Date(entry.created_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}
               </span>
 
-              {entry.knox_reaction && (
-                <p className="knox-reaction">{entry.knox_reaction}</p>
+              {(entry.knox_reaction || entry.knox_reaction_emoji) && (
+                <p className="knox-reaction">
+                  {entry.knox_reaction_emoji && <span className="reaction-emoji">{entry.knox_reaction_emoji} </span>}
+                  {entry.knox_reaction}
+                </p>
               )}
               {isReacting && <p className="knox-reaction knox-reaction--pending">Knox is looking...</p>}
 
-              {!entry.knox_reaction && !isReacting && (
+              {!entry.knox_reaction && !entry.knox_reaction_emoji && !isReacting && (
                 <button
                   type="button"
                   className="ask-knox-button"
