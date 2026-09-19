@@ -393,3 +393,30 @@ body {
 .reply-form button:disabled {
   opacity: 0.5;
 }
+.reaction-emoji {
+  font-size: 1.05em;
+}
+
+.emoji-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.emoji-picker-button {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 0.35rem 0.6rem;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.emoji-picker-button--selected {
+  border-color: var(--accent);
+  background: rgba(232, 168, 124, 0.15);
+}
+
+.emoji-picker-button:disabled {
+  opacity: 0.5;
+}
