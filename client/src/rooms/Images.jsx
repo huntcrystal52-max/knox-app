@@ -29,7 +29,7 @@ export default function Images() {
   function askKnox(id) {
     setReactingIds((prev) => new Set(prev).add(id));
     api
-      .reactToImage(id)
+      .reactToEntry('images', id)
       .then((data) => {
         setEntries((prev) => prev.map((e) => (e.id === data.entry.id ? data.entry : e)));
       })
@@ -59,8 +59,6 @@ export default function Images() {
       setPreview(null);
       setCaption('');
       if (fileInputRef.current) fileInputRef.current.value = '';
-      // Let Knox react on his own, in the background — the upload itself
-      // doesn't wait on this, so a slow vision call never blocks the form.
       askKnox(data.entry.id);
     } catch (err) {
       // Leave the preview and caption in place so nothing's lost if this fails.
