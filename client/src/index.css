@@ -319,3 +319,30 @@ body {
   display: block;
   margin: 0.2rem 1rem 0.75rem;
 }
+.knox-reaction {
+  margin: 0 1rem 0.9rem;
+  padding: 0.6rem 0.85rem;
+  background: rgba(232, 168, 124, 0.12);
+  border-left: 2px solid var(--accent);
+  border-radius: 0.4rem;
+  line-height: 1.45;
+  font-size: 0.95rem;
+}
+
+.knox-reaction--pending {
+  color: var(--muted);
+  font-style: italic;
+  background: transparent;
+  border-left-color: rgba(255, 255, 255, 0.15);
+}
+
+.ask-knox-button {
+  display: block;
+  margin: 0 1rem 0.9rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.85rem;
+}
