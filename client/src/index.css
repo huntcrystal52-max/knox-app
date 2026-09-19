@@ -188,3 +188,64 @@ body {
 .chat-input button:disabled {
   opacity: 0.5;
 }
+
+.entry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 1.25rem 0;
+}
+
+.entry-form textarea {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: var(--text);
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.entry-form textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.entry-form button {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #1a1625;
+  border: none;
+  border-radius: 999px;
+  padding: 0.6rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.entry-form button:disabled {
+  opacity: 0.5;
+}
+
+.entry-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.entry-card {
+  background: var(--surface);
+  border-radius: 0.9rem;
+  padding: 0.9rem 1.1rem;
+}
+
+.entry-body {
+  margin: 0 0 0.4rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.entry-meta {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
