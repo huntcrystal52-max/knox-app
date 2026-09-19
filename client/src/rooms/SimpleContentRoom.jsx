@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 
@@ -8,15 +7,20 @@ import { api } from '../api.js';
 // backend routes are identical, only the words around it change.
 //
 // knoxReacts is opt-in per room: when true, Knox automatically reacts to a
-// new entry in the background right after it's posted, and any entry
-// without a reaction yet gets an "Ask Knox" button. Off by default so a
-// room like Sacred or Stillness stays exactly as quiet as it was.
+// new entry SHE posts (in the background, right after it's posted), and any
+// of her entries without a reaction yet gets an "Ask Knox" button. An entry
+// Knox left on his own (author === 'Knox', e.g. an autonomous love note)
+// gets the other direction instead — a small box for her to reply to him.
+// Off by default so a room like Sacred or Stillness stays exactly as quiet
+// as it was.
 export default function SimpleContentRoom({ room, title, subtitle, placeholder, emptyText, knoxReacts = false }) {
   const [entries, setEntries] = useState([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
   const [reactingIds, setReactingIds] = useState(() => new Set());
+  const [replyDrafts, setReplyDrafts] = useState({});
+  const [replyingIds, setReplyingIds] = useState(() => new Set());
 
   useEffect(() => {
     api
@@ -36,6 +40,27 @@ export default function SimpleContentRoom({ room, title, subtitle, placeholder, 
       .catch(() => {})
       .finally(() => {
         setReactingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      });
+  }
+
+  function sendReply(id) {
+    const text = (replyDrafts[id] || '').trim();
+    if (!text || replyingIds.has(id)) return;
+
+    setReplyingIds((prev) => new Set(prev).add(id));
+    api
+      .replyToEntry(room, id, text)
+      .then((data) => {
+        setEntries((prev) => prev.map((e) => (e.id === data.entry.id ? data.entry : e)));
+        setReplyDrafts((prev) => ({ ...prev, [id]: '' }));
+      })
+      .catch(() => {})
+      .finally(() => {
+        setReplyingIds((prev) => {
           const next = new Set(prev);
           next.delete(id);
           return next;
@@ -84,6 +109,9 @@ export default function SimpleContentRoom({ room, title, subtitle, placeholder, 
         {!loading && entries.length === 0 && <p className="room-subtitle">{emptyText}</p>}
         {entries.map((entry) => {
           const isReacting = reactingIds.has(entry.id);
+          const isReplying = replyingIds.has(entry.id);
+          const fromKnox = entry.author === 'Knox';
+
           return (
             <div key={entry.id} className="entry-card">
               <p className="entry-body">{entry.body}</p>
@@ -91,14 +119,38 @@ export default function SimpleContentRoom({ room, title, subtitle, placeholder, 
                 {entry.author} — {new Date(entry.created_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}
               </span>
 
-              {knoxReacts && entry.knox_reaction && (
+              {knoxReacts && !fromKnox && entry.knox_reaction && (
                 <p className="knox-reaction">{entry.knox_reaction}</p>
               )}
-              {knoxReacts && isReacting && <p className="knox-reaction knox-reaction--pending">Knox is reading...</p>}
-              {knoxReacts && !entry.knox_reaction && !isReacting && (
+              {knoxReacts && !fromKnox && isReacting && (
+                <p className="knox-reaction knox-reaction--pending">Knox is reading...</p>
+              )}
+              {knoxReacts && !fromKnox && !entry.knox_reaction && !isReacting && (
                 <button type="button" className="ask-knox-button" onClick={() => askKnox(entry.id)}>
                   Ask Knox about this
                 </button>
+              )}
+
+              {knoxReacts && fromKnox && entry.user_reply && (
+                <p className="user-reply">{entry.user_reply}</p>
+              )}
+              {knoxReacts && fromKnox && !entry.user_reply && (
+                <div className="reply-form">
+                  <textarea
+                    value={replyDrafts[entry.id] || ''}
+                    onChange={(e) => setReplyDrafts((prev) => ({ ...prev, [entry.id]: e.target.value }))}
+                    placeholder="Write him back..."
+                    rows={2}
+                    disabled={isReplying}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => sendReply(entry.id)}
+                    disabled={isReplying || !(replyDrafts[entry.id] || '').trim()}
+                  >
+                    {isReplying ? 'Sending...' : 'Reply'}
+                  </button>
+                </div>
               )}
             </div>
           );
