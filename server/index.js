@@ -7,6 +7,7 @@ import cors from 'cors';
 import { pool, runMigrations } from './db/index.js';
 import authRoutes from './routes/auth.js';
 import roomsRoutes from './routes/rooms.js';
+import chatRoutes from './routes/chat.js';
 
 const app = express();
 const PgSession = connectPgSimple(session);
@@ -19,8 +20,6 @@ app.use(
   })
 );
 
-app.set('trust proxy', 1);
-
 app.use(
   session({
     store: new PgSession({ pool, createTableIfMissing: true }),
@@ -29,14 +28,15 @@ app.use(
     saveUninitialized: false,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      secure: true,
-      sameSite: 'none',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
     },
   })
 );
 
 app.use('/auth', authRoutes);
 app.use('/api/rooms', roomsRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
