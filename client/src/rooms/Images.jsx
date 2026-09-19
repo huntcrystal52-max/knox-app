@@ -7,6 +7,7 @@ export default function Images() {
   const [uploading, setUploading] = useState(false);
   const [caption, setCaption] = useState('');
   const [preview, setPreview] = useState(null);
+  const [reactingIds, setReactingIds] = useState(() => new Set());
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -25,6 +26,23 @@ export default function Images() {
     reader.readAsDataURL(file);
   }
 
+  function askKnox(id) {
+    setReactingIds((prev) => new Set(prev).add(id));
+    api
+      .reactToImage(id)
+      .then((data) => {
+        setEntries((prev) => prev.map((e) => (e.id === data.entry.id ? data.entry : e)));
+      })
+      .catch(() => {})
+      .finally(() => {
+        setReactingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      });
+  }
+
   async function handleUpload(e) {
     e.preventDefault();
     if (!preview || uploading) return;
@@ -41,6 +59,9 @@ export default function Images() {
       setPreview(null);
       setCaption('');
       if (fileInputRef.current) fileInputRef.current.value = '';
+      // Let Knox react on his own, in the background — the upload itself
+      // doesn't wait on this, so a slow vision call never blocks the form.
+      askKnox(data.entry.id);
     } catch (err) {
       // Leave the preview and caption in place so nothing's lost if this fails.
     } finally {
@@ -77,15 +98,33 @@ export default function Images() {
       <div className="image-grid">
         {loading && <p className="room-subtitle">Loading...</p>}
         {!loading && entries.length === 0 && <p className="room-subtitle">Nothing here yet.</p>}
-        {entries.map((entry) => (
-          <div key={entry.id} className="image-card">
-            <img src={entry.media_url} alt={entry.body || ''} />
-            {entry.body && <p className="image-caption">{entry.body}</p>}
-            <span className="entry-meta">
-              {entry.author} — {new Date(entry.created_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}
-            </span>
-          </div>
-        ))}
+        {entries.map((entry) => {
+          const isReacting = reactingIds.has(entry.id);
+          return (
+            <div key={entry.id} className="image-card">
+              <img src={entry.media_url} alt={entry.body || ''} />
+              {entry.body && <p className="image-caption">{entry.body}</p>}
+              <span className="entry-meta">
+                {entry.author} — {new Date(entry.created_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}
+              </span>
+
+              {entry.knox_reaction && (
+                <p className="knox-reaction">{entry.knox_reaction}</p>
+              )}
+              {isReacting && <p className="knox-reaction knox-reaction--pending">Knox is looking...</p>}
+
+              {!entry.knox_reaction && !isReacting && (
+                <button
+                  type="button"
+                  className="ask-knox-button"
+                  onClick={() => askKnox(entry.id)}
+                >
+                  Ask Knox about this
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
