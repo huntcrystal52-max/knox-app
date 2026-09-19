@@ -43,4 +43,8 @@ export const api = {
   // note) — either or both of text/emoji.
   replyToEntry: (room, id, { text, emoji } = {}) =>
     request(`/api/rooms/${room}/${id}/reply`, { method: 'POST', body: JSON.stringify({ text, emoji }) }),
+
+  // Build room — everything Knox has made, and asking him to make something.
+  listBuilds: () => request('/api/build'),
+  requestBuild: (prompt) => request('/api/build', { method: 'POST', body: JSON.stringify({ prompt }) }),
 };
