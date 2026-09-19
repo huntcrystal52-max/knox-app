@@ -44,38 +44,46 @@ router.post('/:room', requireLogin, async (req, res) => {
   res.status(201).json({ entry: rows[0] });
 });
 
-// POST /api/rooms/images/:id/react -> ask Knox to actually look at one photo
-// and leave a short reaction on it. This relays to Knox-bot's own internal
-// endpoint (same pattern as /api/chat/message) rather than calling a vision
-// model directly here, so his voice/personality logic still lives in one
-// place. The reaction is stored on the row itself, not sent into the Home
-// chat — it belongs with the photo, in this room.
-router.post('/images/:id/react', requireLogin, async (req, res) => {
-  const { id } = req.params;
+// POST /api/rooms/:room/:id/react -> ask Knox to actually look at (an image)
+// or read (a note) one entry and leave a short reaction on it. This relays
+// to Knox-bot's own internal endpoints (same pattern as /api/chat/message)
+// rather than rebuilding his vision/personality logic here, so his voice
+// stays in one place. Works for any room/kind — an image entry gets the
+// vision pipeline, anything else gets a plain text reaction. The reaction
+// is stored on the row itself, not sent into the Home chat — it belongs
+// with the entry, in the room it was left in.
+router.post('/:room/:id/react', requireLogin, async (req, res) => {
+  const { room, id } = req.params;
 
   const { rows } = await pool.query(
-    `SELECT id, body, media_url FROM room_content WHERE id = $1 AND room = 'images'`,
-    [id]
+    `SELECT id, room, kind, body, media_url FROM room_content WHERE id = $1 AND room = $2`,
+    [id, room]
   );
   const entry = rows[0];
   if (!entry) {
-    return res.status(404).json({ error: 'Image not found.' });
+    return res.status(404).json({ error: 'Entry not found.' });
   }
 
+  const isImage = entry.kind === 'image' && entry.media_url;
+  const path = isImage ? '/internal/react-image' : '/internal/react-text';
+  const payload = isImage
+    ? { imageUrl: entry.media_url, caption: entry.body }
+    : { room: entry.room, text: entry.body };
+
   try {
-    const knoxRes = await fetch(`${process.env.KNOX_BOT_URL}/internal/react-image`, {
+    const knoxRes = await fetch(`${process.env.KNOX_BOT_URL}${path}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-internal-secret': process.env.INTERNAL_API_SECRET,
       },
-      body: JSON.stringify({ imageUrl: entry.media_url, caption: entry.body }),
+      body: JSON.stringify(payload),
     });
 
     if (!knoxRes.ok) {
       const errText = await knoxRes.text();
-      console.error('Knox-bot internal react-image error:', knoxRes.status, errText);
-      return res.status(502).json({ error: 'Knox could not look at that right now.' });
+      console.error('Knox-bot internal react error:', knoxRes.status, errText);
+      return res.status(502).json({ error: 'Knox could not react to that right now.' });
     }
 
     const { reaction } = await knoxRes.json();
@@ -89,7 +97,7 @@ router.post('/images/:id/react', requireLogin, async (req, res) => {
 
     res.json({ entry: updated.rows[0] });
   } catch (err) {
-    console.error('Error reaching Knox-bot for image reaction:', err);
+    console.error('Error reaching Knox-bot for a reaction:', err);
     res.status(502).json({ error: 'Could not reach Knox.' });
   }
 });
