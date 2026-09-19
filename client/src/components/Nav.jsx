@@ -9,8 +9,8 @@ export const ROOMS = [
   { path: '/sacred', label: 'Sacred' },
   { path: '/stillness', label: 'Stillness' },
   { path: '/images', label: 'Images' },
+  { path: '/build', label: 'Build' },
   // Added one at a time as each room gets built:
-  // { path: '/build', label: 'Build' },
   // { path: '/wearable', label: 'Wearable' },
 ];
 
