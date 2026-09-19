@@ -8,6 +8,7 @@ export default function LoveNotes() {
       subtitle="Somewhere to leave what doesn't fit into the everyday."
       placeholder="Write him a note..."
       emptyText="Nothing here yet — leave the first one."
+      knoxReacts
     />
   );
 }
