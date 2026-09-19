@@ -48,5 +48,14 @@ export async function runMigrations() {
     ALTER TABLE room_content ADD COLUMN IF NOT EXISTS user_reply TEXT;
   `);
 
+  // Emoji companions to the two reaction columns above — either side can
+  // react with just an emoji, with words, or both.
+  await pool.query(`
+    ALTER TABLE room_content ADD COLUMN IF NOT EXISTS knox_reaction_emoji TEXT;
+  `);
+  await pool.query(`
+    ALTER TABLE room_content ADD COLUMN IF NOT EXISTS user_reply_emoji TEXT;
+  `);
+
   console.log('Database ready.');
 }
