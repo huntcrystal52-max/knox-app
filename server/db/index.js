@@ -23,6 +23,11 @@ export async function runMigrations() {
   await pool.query(`
     CREATE INDEX IF NOT EXISTS room_content_room_idx ON room_content (room, created_at DESC);
   `);
-
+  
+// Holds Knox's own reaction to an image, when he's been asked to look at
+  // one (Images room). Nullable — most rows in other rooms never use it.
+  await pool.query(`
+    ALTER TABLE room_content ADD COLUMN IF NOT EXISTS knox_reaction TEXT;
+  `);
   console.log('Database ready.');
 }
