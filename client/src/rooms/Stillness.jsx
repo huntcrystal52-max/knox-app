@@ -8,6 +8,7 @@ export default function Stillness() {
       subtitle="A quiet room. No pressure to fill it."
       placeholder="Or just sit with it..."
       emptyText="Quiet, for now."
+      knoxReacts
     />
   );
 }
