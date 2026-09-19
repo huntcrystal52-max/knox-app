@@ -8,6 +8,7 @@ export default function Sacred() {
       subtitle="The reverent, unhurried space."
       placeholder="Write what belongs here..."
       emptyText="Nothing here yet."
+      knoxReacts
     />
   );
 }
