@@ -28,4 +28,9 @@ export const api = {
   getChatHistory: () => request('/api/chat/history'),
   sendChatMessage: (message) =>
     request('/api/chat/message', { method: 'POST', body: JSON.stringify({ message }) }),
+
+  // Images room — uploads to Cloudinary via the backend, returns the URL to
+  // then post into the images room like any other entry.
+  uploadImage: (dataUri) =>
+    request('/api/upload/image', { method: 'POST', body: JSON.stringify({ image: dataUri }) }),
 };
