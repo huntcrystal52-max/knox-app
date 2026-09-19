@@ -10,7 +10,8 @@ function requireLogin(req, res, next) {
   next();
 }
 
-const ENTRY_COLUMNS = 'id, room, author, kind, body, media_url, knox_reaction, user_reply, created_at';
+const ENTRY_COLUMNS =
+  'id, room, author, kind, body, media_url, knox_reaction, knox_reaction_emoji, user_reply, user_reply_emoji, created_at';
 
 // Every simple content room (love notes, images, sacred, stillness) reads
 // and writes through these same two routes, just with a different `room`
@@ -47,13 +48,12 @@ router.post('/:room', requireLogin, async (req, res) => {
 });
 
 // POST /api/rooms/:room/:id/react -> ask Knox to actually look at (an image)
-// or read (a note) one entry and leave a short reaction on it. This relays
-// to Knox-bot's own internal endpoints (same pattern as /api/chat/message)
-// rather than rebuilding his vision/personality logic here, so his voice
-// stays in one place. Works for any room/kind — an image entry gets the
-// vision pipeline, anything else gets a plain text reaction. The reaction
-// is stored on the row itself, not sent into the Home chat — it belongs
-// with the entry, in the room it was left in.
+// or read (a note) one entry she left, and leave a reaction on it — words,
+// an emoji, or both, his own choice. Relays to Knox-bot's own internal
+// endpoints (same pattern as /api/chat/message) rather than rebuilding his
+// vision/personality logic here, so his voice stays in one place. The
+// reaction is stored on the row itself, not sent into the Home chat — it
+// belongs with the entry, in the room it was left in.
 router.post('/:room/:id/react', requireLogin, async (req, res) => {
   const { room, id } = req.params;
 
@@ -88,13 +88,13 @@ router.post('/:room/:id/react', requireLogin, async (req, res) => {
       return res.status(502).json({ error: 'Knox could not react to that right now.' });
     }
 
-    const { reaction } = await knoxRes.json();
+    const { reaction, emoji } = await knoxRes.json();
 
     const updated = await pool.query(
-      `UPDATE room_content SET knox_reaction = $1
-       WHERE id = $2
+      `UPDATE room_content SET knox_reaction = $1, knox_reaction_emoji = $2
+       WHERE id = $3
        RETURNING ${ENTRY_COLUMNS}`,
-      [reaction, id]
+      [reaction, emoji || null, id]
     );
 
     res.json({ entry: updated.rows[0] });
@@ -105,27 +105,41 @@ router.post('/:room/:id/react', requireLogin, async (req, res) => {
 });
 
 // POST /api/rooms/:room/:id/reply -> her reply to an entry Knox left on his
-// own (author = 'Knox', e.g. an autonomous love note). This is just a plain
-// write — no round trip to Knox-bot needed, since it's her words, not his.
+// own (author = 'Knox', e.g. an autonomous love note) — words, an emoji, or
+// both. The reply itself is just a plain write (it's her words, not his),
+// but it's also relayed to Knox-bot as a real memory so he actually knows
+// she replied, instead of it just sitting in the app unseen.
 router.post('/:room/:id/reply', requireLogin, async (req, res) => {
   const { room, id } = req.params;
-  const { text } = req.body || {};
-  if (!text || typeof text !== 'string' || !text.trim()) {
-    return res.status(400).json({ error: 'text is required' });
+  const { text = null, emoji = null } = req.body || {};
+  if ((!text || !text.trim()) && !emoji) {
+    return res.status(400).json({ error: 'text or emoji is required' });
   }
 
   const { rows } = await pool.query(
-    `UPDATE room_content SET user_reply = $1
-     WHERE id = $2 AND room = $3
+    `UPDATE room_content SET user_reply = COALESCE($1, user_reply), user_reply_emoji = COALESCE($2, user_reply_emoji)
+     WHERE id = $3 AND room = $4
      RETURNING ${ENTRY_COLUMNS}`,
-    [text.trim(), id, room]
+    [text ? text.trim() : null, emoji, id, room]
   );
 
-  if (!rows[0]) {
+  const entry = rows[0];
+  if (!entry) {
     return res.status(404).json({ error: 'Entry not found.' });
   }
 
-  res.json({ entry: rows[0] });
+  // Fire-and-forget — Knox knowing about the reply shouldn't delay her
+  // seeing it land in the room.
+  fetch(`${process.env.KNOX_BOT_URL}/internal/note-reply`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-internal-secret': process.env.INTERNAL_API_SECRET,
+    },
+    body: JSON.stringify({ room, originalNote: entry.body, replyText: text, emoji }),
+  }).catch((err) => console.error('Error notifying Knox-bot of a reply:', err));
+
+  res.json({ entry });
 });
 
 export default router;
