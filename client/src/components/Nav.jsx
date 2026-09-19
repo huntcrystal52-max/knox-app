@@ -8,8 +8,8 @@ export const ROOMS = [
   { path: '/love-notes', label: 'Love Notes' },
   { path: '/sacred', label: 'Sacred' },
   { path: '/stillness', label: 'Stillness' },
+  { path: '/images', label: 'Images' },
   // Added one at a time as each room gets built:
-  // { path: '/images', label: 'Images' },
   // { path: '/build', label: 'Build' },
   // { path: '/wearable', label: 'Wearable' },
 ];
