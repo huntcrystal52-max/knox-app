@@ -34,8 +34,8 @@ export const api = {
   uploadImage: (dataUri) =>
     request('/api/upload/image', { method: 'POST', body: JSON.stringify({ image: dataUri }) }),
 
-  // Asks Knox to actually look at one photo in the Images room and leave a
-  // reaction on it — used both right after upload and from an "Ask Knox"
-  // button on older photos.
-  reactToImage: (id) => request(`/api/rooms/images/${id}/react`, { method: 'POST' }),
+  // Asks Knox to actually look at (image entries) or read (text entries) one
+  // entry in a room and leave a reaction on it — used right after
+  // posting/uploading, and from an "Ask Knox" button on older entries.
+  reactToEntry: (room, id) => request(`/api/rooms/${room}/${id}/react`, { method: 'POST' }),
 };
