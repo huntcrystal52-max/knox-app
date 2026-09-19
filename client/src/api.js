@@ -1,5 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+// Every fetch goes through here so the "send cookies, talk to the right
+// backend" logic lives in one place, not copy-pasted into every room.
 async function request(path, options = {}) {
   const res = await fetch(`${API_URL}${path}`, {
     credentials: 'include',
@@ -16,7 +18,14 @@ export const api = {
   me: () => request('/auth/me'),
   logout: () => request('/auth/logout', { method: 'POST' }),
   loginUrl: () => `${API_URL}/auth/discord`,
+
+  // Shared by every simple content room (love notes, images, sacred, stillness).
   listRoom: (room) => request(`/api/rooms/${room}`),
   postToRoom: (room, entry) =>
     request(`/api/rooms/${room}`, { method: 'POST', body: JSON.stringify(entry) }),
+
+  // Home room chat — talks to Knox's actual brain via the backend relay.
+  getChatHistory: () => request('/api/chat/history'),
+  sendChatMessage: (message) =>
+    request('/api/chat/message', { method: 'POST', body: JSON.stringify({ message }) }),
 };
