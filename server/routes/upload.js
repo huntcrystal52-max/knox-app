@@ -1,23 +1,13 @@
 import { Router } from 'express';
-import { v2 as cloudinary } from 'cloudinary';
+import crypto from 'crypto';
 
 const router = Router();
 
-// Configured explicitly from three plain variables rather than relying on
-// Cloudinary auto-parsing a single CLOUDINARY_URL string — that combined
-// format is easy to mangle by hand (a stray space, a leftover character),
-// and it silently produces this exact "Invalid Signature" error with no
-// clearer clue. Three separate values are simpler to copy correctly.
-// .trim() guards against a stray trailing space or newline sneaking in from
-// a mobile copy-paste — invisible in the Railway variable field, but enough
-// to break the signature check.
-cloudinary.config({
-  cloud_name: (process.env.CLOUDINARY_CLOUD_NAME || '').trim(),
-  api_key: (process.env.CLOUDINARY_API_KEY || '').trim(),
-  api_secret: (process.env.CLOUDINARY_API_SECRET || '').trim(),
-});
+const CLOUD_NAME = (process.env.CLOUDINARY_CLOUD_NAME || '').trim();
+const API_KEY = (process.env.CLOUDINARY_API_KEY || '').trim();
+const API_SECRET = (process.env.CLOUDINARY_API_SECRET || '').trim();
 
-if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
   console.log('[UPLOAD] Warning: one or more Cloudinary env vars are missing (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET).');
 }
 
@@ -28,25 +18,60 @@ function requireLogin(req, res, next) {
   next();
 }
 
-// POST /api/upload/image -> takes a base64 data URI from the browser
-// (read client-side with FileReader, no multipart parsing needed here),
-// sends it to Cloudinary, and hands back the resulting URL. The images
-// room then posts that URL into room_content like any other room entry —
-// this endpoint only exists to do the upload step.
+// POST /api/upload/image -> takes a base64 data URI from the browser and
+// signs + sends it to Cloudinary's upload API directly with fetch, the same
+// way every other external call in this project works (no SDK). This also
+// means that if it fails, we get Cloudinary's actual response body in the
+// logs instead of a generic wrapped error message.
 router.post('/image', requireLogin, async (req, res) => {
   const { image } = req.body || {};
   if (!image || typeof image !== 'string' || !image.startsWith('data:')) {
     return res.status(400).json({ error: 'image (a data URI) is required' });
   }
 
+  if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
+    return res.status(500).json({ error: 'Cloudinary is not configured on the server.' });
+  }
+
   try {
-    const result = await cloudinary.uploader.upload(image, {
+    const timestamp = Math.floor(Date.now() / 1000);
+    // Only the non-file params get signed, sorted alphabetically, exactly as
+    // Cloudinary's docs specify — this must match perfectly or the request
+    // is rejected as an invalid signature.
+    const paramsToSign = `folder=knox-app&timestamp=${timestamp}`;
+    const signature = crypto.createHash('sha1').update(paramsToSign + API_SECRET).digest('hex');
+
+    const body = new URLSearchParams({
+      file: image,
+      api_key: API_KEY,
+      timestamp: String(timestamp),
       folder: 'knox-app',
-      resource_type: 'image',
+      signature,
     });
+
+    const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body,
+    });
+
+    const rawText = await cloudRes.text();
+
+    if (!cloudRes.ok) {
+      console.error('[UPLOAD] Cloudinary rejected the upload:', cloudRes.status, rawText.slice(0, 1000));
+      return res.status(502).json({ error: 'Image upload failed.' });
+    }
+
+    let result;
+    try {
+      result = JSON.parse(rawText);
+    } catch (e) {
+      console.error('[UPLOAD] Cloudinary returned a non-JSON success response:', rawText.slice(0, 1000));
+      return res.status(502).json({ error: 'Image upload failed.' });
+    }
+
     res.json({ url: result.secure_url });
   } catch (err) {
-    console.error('Cloudinary upload error:', err);
+    console.error('[UPLOAD] Upload error:', err.message);
     res.status(502).json({ error: 'Image upload failed.' });
   }
 });
