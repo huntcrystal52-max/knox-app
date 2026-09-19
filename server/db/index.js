@@ -42,5 +42,11 @@ export async function runMigrations() {
     ALTER TABLE room_content ADD COLUMN IF NOT EXISTS knox_reaction TEXT;
   `);
 
+  // The other direction of that same thread: her reply to a note Knox left
+  // autonomously (author = 'Knox'). Nullable, only used on his entries.
+  await pool.query(`
+    ALTER TABLE room_content ADD COLUMN IF NOT EXISTS user_reply TEXT;
+  `);
+
   console.log('Database ready.');
 }
