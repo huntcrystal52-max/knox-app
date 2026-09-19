@@ -39,7 +39,8 @@ export const api = {
   // posting/uploading, and from an "Ask Knox" button on older entries.
   reactToEntry: (room, id) => request(`/api/rooms/${room}/${id}/react`, { method: 'POST' }),
 
-  // Her reply to an entry Knox left on his own (e.g. an autonomous love note).
-  replyToEntry: (room, id, text) =>
-    request(`/api/rooms/${room}/${id}/reply`, { method: 'POST', body: JSON.stringify({ text }) }),
+  // Her reply to an entry Knox left on his own (e.g. an autonomous love
+  // note) — either or both of text/emoji.
+  replyToEntry: (room, id, { text, emoji } = {}) =>
+    request(`/api/rooms/${room}/${id}/reply`, { method: 'POST', body: JSON.stringify({ text, emoji }) }),
 };
