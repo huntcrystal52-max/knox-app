@@ -8,11 +8,14 @@ import { pool, runMigrations } from './db/index.js';
 import authRoutes from './routes/auth.js';
 import roomsRoutes from './routes/rooms.js';
 import chatRoutes from './routes/chat.js';
+import uploadRoutes from './routes/upload.js';
 
 const app = express();
 const PgSession = connectPgSimple(session);
 
-app.use(express.json());
+// Raised from the default ~100kb so a phone photo, sent as a base64 data URI
+// to the /api/upload route, doesn't get rejected before it even gets there.
+app.use(express.json({ limit: '15mb' }));
 app.use(
   cors({
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
@@ -37,6 +40,7 @@ app.use(
 app.use('/auth', authRoutes);
 app.use('/api/rooms', roomsRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/upload', uploadRoutes);
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
