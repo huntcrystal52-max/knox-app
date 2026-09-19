@@ -3,10 +3,11 @@ import { useAuth } from './useAuth.js';
 import Nav from './components/Nav.jsx';
 import Login from './components/Login.jsx';
 import Home from './rooms/Home.jsx';
+import LoveNotes from './rooms/LoveNotes.jsx';
+import Sacred from './rooms/Sacred.jsx';
+import Stillness from './rooms/Stillness.jsx';
 
-// New rooms get their own <Route> added here as they're built, e.g.:
-//   import LoveNotes from './rooms/LoveNotes.jsx';
-//   <Route path="/love-notes" element={<LoveNotes user={user} />} />
+// New rooms get their own <Route> added here as they're built.
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -25,6 +26,9 @@ export default function App() {
       <main className="main">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/love-notes" element={<LoveNotes />} />
+          <Route path="/sacred" element={<Sacred />} />
+          <Route path="/stillness" element={<Stillness />} />
         </Routes>
       </main>
     </div>
