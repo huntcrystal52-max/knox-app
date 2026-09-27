@@ -47,4 +47,7 @@ export const api = {
   // Build room — everything Knox has made, and asking him to make something.
   listBuilds: () => request('/api/build'),
   requestBuild: (prompt) => request('/api/build', { method: 'POST', body: JSON.stringify({ prompt }) }),
+
+  // Is Knox-bot actually up right now — feeds the green/grey "Live" dot.
+  getStatus: () => request('/api/status'),
 };
