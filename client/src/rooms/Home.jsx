@@ -7,6 +7,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const bottomRef = useRef(null);
+  const textareaRef = useRef(null);
 
   useEffect(() => {
     api
@@ -62,7 +63,26 @@ export default function Home() {
       ]);
     } finally {
       setSending(false);
+      if (textareaRef.current) textareaRef.current.style.height = 'auto';
     }
+  }
+
+  // Enter on its own just types a new line, like a normal texting app — only
+  // Shift+Enter (or the Send button) actually sends. That's the reverse of
+  // the browser's default for a plain text input, which is why this used to
+  // send mid-sentence.
+  function handleKeyDown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend(e);
+    }
+  }
+
+  function handleInput(e) {
+    setInput(e.target.value);
+    // Auto-grow with what's typed, capped by max-height in the CSS.
+    e.target.style.height = 'auto';
+    e.target.style.height = `${e.target.scrollHeight}px`;
   }
 
   return (
@@ -89,13 +109,14 @@ export default function Home() {
         <div ref={bottomRef} />
       </div>
       <form className="chat-input" onSubmit={handleSend}>
-        <input
-          type="text"
+        <textarea
+          ref={textareaRef}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={handleInput}
+          onKeyDown={handleKeyDown}
           placeholder="Say something..."
+          rows={1}
           disabled={sending}
-          autoComplete="off"
         />
         <button type="submit" disabled={sending || !input.trim()}>
           Send
