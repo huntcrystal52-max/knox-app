@@ -77,5 +77,12 @@ export async function runMigrations() {
     CREATE INDEX IF NOT EXISTS build_projects_created_idx ON build_projects (created_at DESC);
   `);
 
+  // 'html' (the original, sandboxed-iframe kind) or 'python' (run remotely
+  // via Piston and shown as text output instead of a live page). Existing
+  // rows default to 'html' since that's all the Build room used to make.
+  await pool.query(`
+    ALTER TABLE build_projects ADD COLUMN IF NOT EXISTS language TEXT NOT NULL DEFAULT 'html';
+  `);
+
   console.log('Database ready.');
 }
