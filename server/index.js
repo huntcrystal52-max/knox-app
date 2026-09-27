@@ -10,6 +10,7 @@ import roomsRoutes from './routes/rooms.js';
 import chatRoutes from './routes/chat.js';
 import uploadRoutes from './routes/upload.js';
 import buildRoutes from './routes/build.js';
+import statusRoutes from './routes/status.js';
 
 const app = express();
 const PgSession = connectPgSimple(session);
@@ -43,6 +44,7 @@ app.use('/api/rooms', roomsRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/build', buildRoutes);
+app.use('/api/status', statusRoutes);
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
