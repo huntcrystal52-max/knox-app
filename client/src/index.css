@@ -607,3 +607,39 @@ body {
   color: #e88c8c;
   margin: 0;
 }
+.house-image-wrap {
+  margin: 1rem 0;
+  border-radius: 0.9rem;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.house-image {
+  width: 100%;
+  display: block;
+}
+
+.house-additions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.house-addition-card {
+  background: var(--surface);
+  border-radius: 0.9rem;
+  padding: 0.9rem 1.1rem;
+}
+
+.house-addition-type {
+  margin: 0 0 0.3rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.house-addition-room {
+  font-weight: 400;
+  color: var(--muted);
+  text-transform: none;
+}
