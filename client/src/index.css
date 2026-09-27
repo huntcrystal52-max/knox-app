@@ -534,3 +534,76 @@ body {
   border-radius: 999px;
   backdrop-filter: blur(4px);
 }
+.build-language-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.build-language-button {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.build-language-button--active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(232, 168, 124, 0.12);
+}
+
+.build-python {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.build-code {
+  background: #05070d;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.6rem;
+  padding: 0.85rem 1rem;
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.build-output {
+  background: var(--surface);
+  border-radius: 0.6rem;
+  padding: 0.75rem 0.9rem;
+}
+
+.build-output-stdout,
+.build-output-stderr {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+.build-output-stdout {
+  color: var(--text);
+}
+
+.build-output-stderr {
+  color: #e88c8c;
+  margin-top: 0.5rem;
+}
+
+.build-output-error {
+  color: #e88c8c;
+  margin: 0;
+}
