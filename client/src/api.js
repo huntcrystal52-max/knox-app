@@ -55,4 +55,10 @@ export const api = {
 
   // Is Knox-bot actually up right now — feeds the green/grey "Live" dot.
   getStatus: () => request('/api/status'),
+
+  // House room — the real, evolving place Knox is building. room is
+  // optional (e.g. 'living room', 'kitchen'), prompt is what to build.
+  getHouse: () => request('/api/house'),
+  requestHouseAddition: (prompt, room) =>
+    request('/api/house', { method: 'POST', body: JSON.stringify({ prompt, room }) }),
 };
