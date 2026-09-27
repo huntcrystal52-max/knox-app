@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { useAuth } from './useAuth.js';
 import Nav from './components/Nav.jsx';
+import LiveCounter from './components/LiveCounter.jsx';
 import Login from './components/Login.jsx';
 import Home from './rooms/Home.jsx';
 import LoveNotes from './rooms/LoveNotes.jsx';
@@ -24,6 +25,10 @@ export default function App() {
 
   return (
     <div className="app">
+      <LiveCounter />
+      <div className="brand-bar">
+        <span className="brand">Flame</span>
+      </div>
       <Nav />
       <main className="main">
         <Routes>
