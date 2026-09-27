@@ -67,17 +67,6 @@ export default function Home() {
     }
   }
 
-  // Enter on its own just types a new line, like a normal texting app — only
-  // Shift+Enter (or the Send button) actually sends. That's the reverse of
-  // the browser's default for a plain text input, which is why this used to
-  // send mid-sentence.
-  function handleKeyDown(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend(e);
-    }
-  }
-
   function handleInput(e) {
     setInput(e.target.value);
     // Auto-grow with what's typed, capped by max-height in the CSS.
@@ -113,7 +102,6 @@ export default function Home() {
           ref={textareaRef}
           value={input}
           onChange={handleInput}
-          onKeyDown={handleKeyDown}
           placeholder="Say something..."
           rows={1}
           disabled={sending}
