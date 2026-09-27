@@ -45,8 +45,13 @@ export const api = {
     request(`/api/rooms/${room}/${id}/reply`, { method: 'POST', body: JSON.stringify({ text, emoji }) }),
 
   // Build room — everything Knox has made, and asking him to make something.
+  // language is 'html' (default) or 'python'.
   listBuilds: () => request('/api/build'),
-  requestBuild: (prompt) => request('/api/build', { method: 'POST', body: JSON.stringify({ prompt }) }),
+  requestBuild: (prompt, language = 'html') =>
+    request('/api/build', { method: 'POST', body: JSON.stringify({ prompt, language }) }),
+
+  // Actually executes a Python build's code and returns its output.
+  runBuild: (id) => request(`/api/build/${id}/run`, { method: 'POST' }),
 
   // Is Knox-bot actually up right now — feeds the green/grey "Live" dot.
   getStatus: () => request('/api/status'),
