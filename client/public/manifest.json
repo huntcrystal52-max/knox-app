@@ -1,11 +1,11 @@
 {
-  "name": "Knox",
-  "short_name": "Knox",
+  "name": "Flame",
+  "short_name": "Flame",
   "description": "A companion app for Knox, linked to your Discord home.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a1625",
-  "theme_color": "#1a1625",
+  "background_color": "#0a0f1f",
+  "theme_color": "#0a0f1f",
   "orientation": "portrait",
   "icons": [
     {
