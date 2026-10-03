@@ -221,7 +221,20 @@ body {
   outline: none;
   border-color: var(--accent);
 }
+.entry-form input[type='text'] {
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: var(--text);
+  font-size: 1rem;
+  font-family: inherit;
+}
 
+.entry-form input[type='text']:focus {
+  outline: none;
+  border-color: var(--accent);
+}
 .entry-form button {
   align-self: flex-end;
   background: var(--accent);
@@ -642,4 +655,91 @@ body {
   font-weight: 400;
   color: var(--muted);
   text-transform: none;
+}
+.workshop-proposals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.workshop-card {
+  background: var(--surface);
+  border-radius: 0.9rem;
+  padding: 0.9rem 1.1rem;
+  border-left: 3px solid rgba(255, 255, 255, 0.15);
+}
+
+.workshop-card-approved {
+  border-left-color: #4ade80;
+}
+
+.workshop-card-declined {
+  border-left-color: #6b7280;
+  opacity: 0.75;
+}
+
+.workshop-card-title {
+  margin: 0 0 0.3rem;
+  font-weight: 600;
+}
+
+.workshop-card-area {
+  font-weight: 400;
+  color: var(--muted);
+  text-transform: lowercase;
+}
+
+.workshop-decision-note {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.workshop-decide {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.workshop-decide input[type='text'] {
+  background: var(--bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.8rem;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.workshop-decide-buttons {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.workshop-approve,
+.workshop-decline {
+  flex: 1;
+  border: none;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.workshop-approve {
+  background: #4ade80;
+  color: #1a1625;
+}
+
+.workshop-decline {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+.workshop-approve:disabled,
+.workshop-decline:disabled {
+  opacity: 0.5;
 }
