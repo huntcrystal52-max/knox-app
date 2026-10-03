@@ -61,4 +61,14 @@ export const api = {
   getHouse: () => request('/api/house'),
   requestHouseAddition: (prompt, room) =>
     request('/api/house', { method: 'POST', body: JSON.stringify({ prompt, room }) }),
+
+  // Workshop — Knox's real say in his own development. prompt is optional:
+  // a hint about what to think about, or omitted to let him reflect on his
+  // own. decideProposal is strictly a status flag for her decision — it
+  // never applies, commits, or deploys anything by itself.
+  getProposals: () => request('/api/workshop'),
+  requestProposal: (prompt) =>
+    request('/api/workshop', { method: 'POST', body: JSON.stringify({ prompt: prompt || null }) }),
+  decideProposal: (id, decision, note) =>
+    request(`/api/workshop/${id}/decide`, { method: 'POST', body: JSON.stringify({ decision, note }) }),
 };
