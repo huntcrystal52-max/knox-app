@@ -11,6 +11,7 @@ export const ROOMS = [
   { path: '/images', label: 'Images' },
   { path: '/build', label: 'Build' },
   { path: '/house', label: 'House' },
+  { path: '/workshop', label: 'Workshop' },
   // Added one at a time as each room gets built:
   // { path: '/wearable', label: 'Wearable' },
 ];
