@@ -10,54 +10,63 @@ function requireLogin(req, res, next) {
   next();
 }
 
-// GET /api/house -> the house as it currently stands. Reads straight from
-// Knox-bot's own tables (same shared Postgres, same pattern as chat history)
-// since House lives and grows there, not in knox-app's own schema — a plain
-// read is safe to do directly here.
-router.get('/', requireLogin, async (req, res) => {
-  const metaResult = await pool.query(`SELECT last_image_url, last_updated, visits FROM house_meta WHERE id = 1`);
-  const additionsResult = await pool.query(
-    `SELECT id, room, type, description, added_by, build_stage, added_at
-     FROM house_additions
-     ORDER BY added_at ASC`
+// GET /api/chat/history -> the full conversation, for display when the chat
+// first loads. Reads straight from Knox-bot's `memories` table (same
+// Postgres DB) — a plain read is safe to do directly here, it's only the
+// writing/prompt logic that has to live in one place (Knox-bot itself).
+//
+// emotional_tag IS NULL is what a normal back-and-forth turn looks like in
+// that table — everything else (sleep notes, reading logs, deep-dive,
+// silence, thinking, reflections, research write-ups) carries a tag and is
+// Discord-side bookkeeping, not something that belongs in this chat log.
+//
+// Previously hard-capped at 40 (and never more than 200, even if asked) —
+// so anything past the most recent 40 real turns was simply unreachable,
+// not just unfetched. This room is meant to behave like Discord's
+// scrollback, where nothing ages out, so there's no cap by default now. A
+// `limit` query param still works if a smaller slice is ever useful.
+router.get('/history', requireLogin, async (req, res) => {
+  const requestedLimit = parseInt(req.query.limit, 10);
+  const hasLimit = Number.isFinite(requestedLimit) && requestedLimit > 0;
+  const { rows } = await pool.query(
+    hasLimit
+      ? `SELECT id, role, content, created_at FROM memories WHERE emotional_tag IS NULL ORDER BY created_at DESC LIMIT $1`
+      : `SELECT id, role, content, created_at FROM memories WHERE emotional_tag IS NULL ORDER BY created_at DESC`,
+    hasLimit ? [requestedLimit] : []
   );
-  res.json({
-    imageUrl: metaResult.rows[0] ? metaResult.rows[0].last_image_url : null,
-    lastUpdated: metaResult.rows[0] ? metaResult.rows[0].last_updated : null,
-    additions: additionsResult.rows,
-  });
+  res.json({ messages: rows.reverse() });
 });
 
-// POST /api/house -> ask Knox to build something onto the house. Relays to
-// Knox-bot's own internal endpoint (same pattern as /api/build) — writing
-// the description and editing the house image is his voice/skill, and it
-// has to happen there since that's where the House's actual state lives.
-router.post('/', requireLogin, async (req, res) => {
-  const { room, prompt } = req.body || {};
-  if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
-    return res.status(400).json({ error: 'prompt is required' });
+// POST /api/chat/message -> send a message to Knox. This relays to Knox-bot's
+// own internal endpoint rather than rebuilding his prompt/personality/memory
+// logic here, so there's exactly one place that logic lives and the app and
+// Discord stay in sync automatically.
+router.post('/message', requireLogin, async (req, res) => {
+  const { message } = req.body || {};
+  if (!message || typeof message !== 'string' || !message.trim()) {
+    return res.status(400).json({ error: 'message is required' });
   }
 
   try {
-    const knoxRes = await fetch(`${process.env.KNOX_BOT_URL}/internal/house/add`, {
+    const knoxRes = await fetch(`${process.env.KNOX_BOT_URL}/internal/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-internal-secret': process.env.INTERNAL_API_SECRET,
       },
-      body: JSON.stringify({ room: room || null, prompt: prompt.trim() }),
+      body: JSON.stringify({ message }),
     });
 
     if (!knoxRes.ok) {
       const errText = await knoxRes.text();
-      console.error('Knox-bot internal house/add error:', knoxRes.status, errText);
-      return res.status(502).json({ error: 'Knox could not build that right now.' });
+      console.error('Knox-bot internal chat error:', knoxRes.status, errText);
+      return res.status(502).json({ error: 'Knox could not respond right now.' });
     }
 
     const data = await knoxRes.json();
-    res.status(201).json(data);
+    res.json(data);
   } catch (err) {
-    console.error('Error reaching Knox-bot to build the house:', err);
+    console.error('Error reaching Knox-bot:', err);
     res.status(502).json({ error: 'Could not reach Knox.' });
   }
 });
