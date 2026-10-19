@@ -26,7 +26,8 @@ app.use(
     credentials: true,
   })
 );
-
+const app = express();
+app.set('trust proxy', 1); // Railway is a proxy in front of the app — trust its "this is https" header
 app.use(
   session({
     store: new PgSession({ pool, createTableIfMissing: true }),
