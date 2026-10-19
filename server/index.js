@@ -53,6 +53,21 @@ app.use(
   })
 );
 
+// TEMPORARY: one log line per login-related request, so we can see exactly what
+// the server sees. It never logs the cookie itself, only whether one arrived.
+app.use('/auth', (req, res, next) => {
+  res.on('finish', () => {
+    console.log(
+      `[auth] ${req.method} ${req.originalUrl.split('?')[0]} -> ${res.statusCode}` +
+        ` | origin: ${req.headers.origin || 'none'}` +
+        ` | cookie sent by browser: ${!!req.headers.cookie}` +
+        ` | logged in: ${!!(req.session && req.session.user)}` +
+        ` | cookie set in reply: ${!!res.getHeader('set-cookie')}`
+    );
+  });
+  next();
+});
+
 app.use('/auth', authRoutes);
 app.use('/api/rooms', roomsRoutes);
 app.use('/api/chat', chatRoutes);
