@@ -20,6 +20,12 @@ const app = express();
 app.set('trust proxy', 1);
 const PgSession = connectPgSimple(session);
 
+// True when running on Railway (or with NODE_ENV=production).
+const isProd =
+  process.env.NODE_ENV === 'production' ||
+  !!process.env.RAILWAY_ENVIRONMENT ||
+  !!process.env.RAILWAY_ENVIRONMENT_NAME;
+
 // Raised from the default ~100kb so a phone photo, sent as a base64 data URI
 // to the /api/upload route, doesn't get rejected before it even gets there.
 app.use(express.json({ limit: '15mb' }));
@@ -38,8 +44,11 @@ app.use(
     saveUninitialized: false,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      // The front page and this server live on two different railway.app addresses,
+      // so the browser counts them as different sites. 'none' (which requires
+      // 'secure') lets the login cookie travel between them.
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
     },
   })
 );
