@@ -15,6 +15,9 @@ import houseRoutes from './routes/house.js';
 import workshopRoutes from './routes/workshop.js';
 
 const app = express();
+// Railway sits in front of the app as a proxy. This tells Express to trust its
+// "this connection is https" header, so the secure login cookie is actually sent.
+app.set('trust proxy', 1);
 const PgSession = connectPgSimple(session);
 
 // Raised from the default ~100kb so a phone photo, sent as a base64 data URI
@@ -26,8 +29,7 @@ app.use(
     credentials: true,
   })
 );
-const app = express();
-app.set('trust proxy', 1); // Railway is a proxy in front of the app — trust its "this is https" header
+
 app.use(
   session({
     store: new PgSession({ pool, createTableIfMissing: true }),
