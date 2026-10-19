@@ -42,6 +42,9 @@ app.use(
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    // Re-send the cookie on every reply, so a login cookie created earlier with
+    // the old settings gets replaced by one with the new settings.
+    rolling: true,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       // The front page and this server live on two different railway.app addresses,
