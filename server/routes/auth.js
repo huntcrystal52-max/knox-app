@@ -63,7 +63,7 @@ router.get('/discord/callback', async (req, res) => {
       return res.status(403).send('This Discord account is not allowed to use this app.');
     }
 
-        req.session.user = {
+    req.session.user = {
       id: discordUser.id,
       username: discordUser.username,
       avatar: discordUser.avatar,
@@ -77,7 +77,7 @@ router.get('/discord/callback', async (req, res) => {
         return res.status(500).send('Login failed — could not save your session.');
       }
       res.redirect(process.env.CLIENT_URL || '/');
-    }); || '/');
+    });
   } catch (err) {
     console.error('Discord OAuth error:', err);
     res.status(500).send('Login failed.');
