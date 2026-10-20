@@ -3,7 +3,8 @@ import express from 'express';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import cors from 'cors';
-
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { pool, runMigrations } from './db/index.js';
 import authRoutes from './routes/auth.js';
 import roomsRoutes from './routes/rooms.js';
@@ -70,7 +71,11 @@ app.use('/auth', (req, res, next) => {
   });
   next();
 });
-
+// Never let the browser reuse an old "who am I" answer.
+app.use('/auth/me', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
 app.use('/auth', authRoutes);
 app.use('/api/rooms', roomsRoutes);
 app.use('/api/chat', chatRoutes);
@@ -81,7 +86,14 @@ app.use('/api/house', houseRoutes);
 app.use('/api/workshop', workshopRoutes);
 
 app.get('/health', (req, res) => res.json({ ok: true }));
-
+const clientDist = path.join(path.dirname(fileURLToPath(import.meta.url)), '../client/dist');
+app.use(express.static(clientDist));
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/auth')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  res.sendFile(path.join(clientDist, 'index.html'));
+});
 const PORT = process.env.PORT || 3001;
 
 runMigrations()
