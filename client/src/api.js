@@ -1,4 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// In production the server also serves this app, so API calls go to the same
+// address (empty string). Only local development talks to port 3001.
+const API_URL = import.meta.env.DEV ? 'http://localhost:3001' : '';
 
 // Every fetch goes through here so the "send cookies, talk to the right
 // backend" logic lives in one place, not copy-pasted into every room.
