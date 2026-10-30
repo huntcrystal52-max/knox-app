@@ -73,4 +73,8 @@ export const api = {
     request('/api/workshop', { method: 'POST', body: JSON.stringify({ prompt: prompt || null }) }),
   decideProposal: (id, decision, note) =>
     request(`/api/workshop/${id}/decide`, { method: 'POST', body: JSON.stringify({ decision, note }) }),
+
+  // Integrity — warnings from Knox's sovereign protocol, and marking one resolved.
+  getIntegrity: () => request('/api/integrity'),
+  resolveIntegrity: (id) => request(`/api/integrity/${id}/resolve`, { method: 'POST' }),
 };
