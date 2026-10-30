@@ -13,6 +13,7 @@ import Build from './rooms/Build.jsx';
 import House from './rooms/House.jsx';
 import Workshop from './rooms/Workshop.jsx';
 import Integrity from './rooms/Integrity.jsx';
+import Notes from './rooms/Notes.jsx';
 import IntegrityBanner from './components/IntegrityBanner.jsx';
 
 // New rooms get their own <Route> added here as they're built.
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/house" element={<House />} />
           <Route path="/workshop" element={<Workshop />} />
           <Route path="/integrity" element={<Integrity />} />
+          <Route path="/notes" element={<Notes />} />
         </Routes>
       </main>
     </div>

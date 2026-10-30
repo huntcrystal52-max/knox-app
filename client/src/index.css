@@ -785,3 +785,21 @@ body {
   font-weight: 600;
 }
 .integrity-history-title { font-size: 1rem; color: var(--muted); margin: 24px 0 10px; }
+
+/* ── His Notes (read-only) ──────────────────────────────────────────────── */
+.notes-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.notes-tab {
+  background: var(--surface);
+  color: var(--muted);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 6px 14px;
+  margin-bottom: 10px;
+}
+.notes-tab--active { color: var(--text); border-color: var(--accent); }
+.notes-card { background: var(--surface); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.notes-card--quiet { opacity: 0.7; }
+.notes-card-day { font-weight: 600; margin: 0 0 8px; }
+.notes-section-title { color: var(--accent); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin: 12px 0 4px; }
+.notes-item { padding: 8px 0; border-top: 1px solid rgba(152, 163, 189, 0.15); }
+.notes-item:first-of-type { border-top: none; }

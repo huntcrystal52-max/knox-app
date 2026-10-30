@@ -77,4 +77,7 @@ export const api = {
   // Integrity — warnings from Knox's sovereign protocol, and marking one resolved.
   getIntegrity: () => request('/api/integrity'),
   resolveIntegrity: (id) => request(`/api/integrity/${id}/resolve`, { method: 'POST' }),
+
+  // His Notes — read-only. There is deliberately no way to write to them.
+  getNotes: () => request('/api/notes'),
 };
