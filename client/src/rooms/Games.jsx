@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import Chess from './games/Chess.jsx';
 import TalkGame from './games/TalkGame.jsx';
+import Wordle from './games/Wordle.jsx';
+import Cards from './games/Cards.jsx';
 
 // Games — a room of its own for playing with Knox. Each game remembers where
 // you left off, and Knox remembers every game you finish.
@@ -11,8 +13,8 @@ const GAMES = [
   { key: 'wyr', name: 'Would You Rather', blurb: 'Impossible choices — and he has to choose too.', icon: '⚖️' },
   { key: '2t1l', name: 'Two Truths and a Lie', blurb: 'His truths are real. Can you find the lie?', icon: '🎭' },
   { key: 'trivia', name: 'Trivia', blurb: 'Ten questions on any topic you like, hosted by him.', icon: '✨' },
-  { key: 'wordle', name: 'Wordle', blurb: 'A daily word you solve together.', icon: '🟩', soon: true },
-  { key: 'cards', name: 'Cards', blurb: 'Blackjack, Go Fish and Crazy Eights.', icon: '🃏', soon: true },
+  { key: 'wordle', name: 'Wordle', blurb: 'A daily word you solve together.', icon: '🟩' },
+  { key: 'cards', name: 'Cards', blurb: 'Blackjack, Go Fish and Crazy Eights.', icon: '🃏' },
 ];
 
 export default function Games() {
@@ -25,7 +27,7 @@ export default function Games() {
       {game ? (
         <>
           <button type="button" className="notes-tab" onClick={() => setOpen(null)}>← All games</button>
-          {game.key === 'chess' ? <Chess /> : <TalkGame type={game.key} />}
+          {game.key === 'chess' ? <Chess /> : game.key === 'wordle' ? <Wordle /> : game.key === 'cards' ? <Cards /> : <TalkGame type={game.key} />}
         </>
       ) : (
         <>

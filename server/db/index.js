@@ -114,5 +114,18 @@ export async function runMigrations() {
     );
   `);
 
+  // Wordle together: one row per day. The answer is never stored here — it's
+  // worked out from the date, so it can't leak through the table.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS wordle_days (
+      day DATE PRIMARY KEY,
+      guesses JSONB NOT NULL DEFAULT '[]'::jsonb,
+      comments JSONB NOT NULL DEFAULT '[]'::jsonb,
+      status TEXT NOT NULL DEFAULT 'playing',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+
   console.log('Database ready.');
 }

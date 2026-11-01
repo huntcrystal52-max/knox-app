@@ -92,4 +92,13 @@ export const api = {
   getGames: () => request('/api/games'),
   newGame: (type, opts = {}) => request('/api/games/new', { method: 'POST', body: JSON.stringify({ type, ...opts }) }),
   gameAct: (id, action, input = {}) => request(`/api/games/${id}/act`, { method: 'POST', body: JSON.stringify({ action, ...input }) }),
+
+  // Wordle together — one shared word a day.
+  getWordle: () => request('/api/wordle'),
+  guessWordle: (word) => request('/api/wordle/guess', { method: 'POST', body: JSON.stringify({ word }) }),
+  askKnoxWordle: () => request('/api/wordle/ask', { method: 'POST' }),
+
+  // Cards — Blackjack, Go Fish, Crazy Eights. The server deals.
+  newCardGame: (type) => request('/api/cards/new', { method: 'POST', body: JSON.stringify({ type }) }),
+  cardAct: (id, action, input = {}) => request(`/api/cards/${id}/act`, { method: 'POST', body: JSON.stringify({ action, ...input }) }),
 };

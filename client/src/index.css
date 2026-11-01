@@ -926,3 +926,46 @@ body {
 .game-result { border-radius: 10px; padding: 8px 12px; margin: 8px 0; }
 .game-result--right { background: rgba(120, 200, 140, 0.15); }
 .game-result--wrong { background: rgba(224, 108, 108, 0.12); }
+
+.game-dispute { margin-top: 6px; background: transparent; color: var(--muted); border: 1px solid rgba(152, 163, 189, 0.35); border-radius: 8px; padding: 5px 10px; font-size: 0.85rem; }
+
+/* ── Wordle ─────────────────────────────────────────────────────────────── */
+.wordle-grid { display: flex; flex-direction: column; gap: 5px; align-items: center; margin: 10px 0; }
+.wordle-row { display: grid; grid-template-columns: repeat(5, min(12vw, 46px)); gap: 5px; }
+.wordle-tile {
+  aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
+  font-size: min(6vw, 24px); font-weight: 700; text-transform: uppercase;
+  border: 2px solid rgba(152, 163, 189, 0.3); border-radius: 6px; color: var(--text);
+}
+.wordle-tile--typed { border-color: var(--muted); }
+.wordle-tile--g { background: #4f9a5e; border-color: #4f9a5e; color: #fff; }
+.wordle-tile--y { background: #c9a43a; border-color: #c9a43a; color: #fff; }
+.wordle-tile--b { background: #2b3348; border-color: #2b3348; color: #c9cfdc; }
+.wordle-keys { display: flex; flex-direction: column; gap: 6px; margin: 12px 0 4px; }
+.wordle-keyrow { display: flex; gap: 4px; justify-content: center; }
+.wordle-key {
+  flex: 1; max-width: 40px; min-width: 0; height: 48px; padding: 0;
+  background: #3a4560; color: var(--text); border: none; border-radius: 6px;
+  font-weight: 600; text-transform: uppercase;
+}
+.wordle-key--wide { flex: 1.6; max-width: 66px; font-size: 0.75rem; }
+.wordle-key--g { background: #4f9a5e; color: #fff; }
+.wordle-key--y { background: #c9a43a; color: #fff; }
+.wordle-key--b { background: #1c2232; color: #6b7590; }
+.wordle-suggest { margin-top: 6px; background: var(--accent); color: #1a1a1a; border: none; border-radius: 8px; padding: 6px 12px; font-weight: 600; }
+
+/* ── Cards ──────────────────────────────────────────────────────────────── */
+.cards-title { font-size: 1.1rem; margin: 10px 0 4px; }
+.cards-label { color: var(--muted); font-size: 0.85rem; margin: 10px 0 4px; }
+.cards-hand { display: flex; flex-wrap: wrap; gap: 6px; }
+.cards-pile { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+.cards-log { max-height: 30vh; }
+.card {
+  width: 46px; height: 64px; display: inline-flex; align-items: center; justify-content: center;
+  background: #f5f2ea; color: #1a1a1a; border: 1px solid #cfc8b8; border-radius: 7px;
+  font-weight: 700; font-size: 1rem; padding: 0; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+.card--red { color: #c0392b; }
+.card:disabled { cursor: default; }
+.card--dim { opacity: 0.4; }
+.card--back { background: repeating-linear-gradient(45deg, #2e3f6b, #2e3f6b 6px, #3a4f85 6px, #3a4f85 12px); border-color: #22305a; }

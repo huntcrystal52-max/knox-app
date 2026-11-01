@@ -86,7 +86,7 @@ function memoryLine(row) {
     return `[Played Two Truths and a Lie with Elira — she spotted my lie ${s.score.elira} time(s), I spotted hers ${s.score.knox} time(s).${(s.learned || []).length ? ' I learned: ' + s.learned.slice(-3).join(' · ') : ''}]`;
   }
   if (row.type === 'trivia') {
-    return `[Hosted trivia for Elira on "${s.topic || 'a mix of things'}" — she got ${s.score} of ${s.total}.]`;
+    return `[Hosted trivia for Elira on "${s.topic || 'a mix of things'}" — she got ${s.score} of ${s.total}.${(s.disputes || []).length ? ` She told me I got some wrong: ${s.disputes.join('; ')}.` : ''}]`;
   }
   return `[Played ${NAMES[row.type]} with Elira.]`;
 }
@@ -266,6 +266,15 @@ async function act(row, action, input) {
       s.current = { question: k.question, options: k.options };
       s.hidden = { answer_index: k.answer_index, fact: k.fact };
       s.asked.push(k.question);
+      return save(row);
+    }
+    if (action === 'dispute' && s.last && !s.last.right && !s.last.disputed) {
+      // She thinks his answer was wrong: she gets the point, and he
+      // remembers he slipped on that fact.
+      s.last.disputed = true;
+      s.score++;
+      s.disputes = [...(s.disputes || []), `${s.last.question} (I said ${s.last.options[s.last.answer_index]})`];
+      say(row, 'system', 'Point given back — he\'ll remember he got that one wrong.');
       return save(row);
     }
     if (action === 'answer' && s.current) {

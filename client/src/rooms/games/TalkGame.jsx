@@ -147,6 +147,9 @@ function Controls({ game, act, busy }) {
         <div className={`game-result ${s.last.right ? 'game-result--right' : 'game-result--wrong'}`}>
           <p className="entry-body">{s.last.right ? 'Right!' : `Not quite — it was ${s.last.options[s.last.answer_index]}.`}</p>
           {s.last.fact && <p className="entry-meta">{s.last.fact}</p>}
+          {!s.last.right && !s.last.disputed && (
+            <button type="button" className="game-dispute" disabled={busy} onClick={() => act('dispute')}>I think that's wrong</button>
+          )}
         </div>
       )}
       {s.current && (
