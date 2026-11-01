@@ -100,5 +100,19 @@ export async function runMigrations() {
     );
   `);
 
+  // Talking games (20 Questions, Would You Rather, Two Truths, Trivia).
+  // state.hidden holds anything secret and is never sent to the browser.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS games (
+      id SERIAL PRIMARY KEY,
+      type TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'active',
+      state JSONB NOT NULL DEFAULT '{}'::jsonb,
+      transcript JSONB NOT NULL DEFAULT '[]'::jsonb,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+
   console.log('Database ready.');
 }

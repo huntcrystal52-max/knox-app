@@ -87,4 +87,9 @@ export const api = {
   newChessGame: (color) => request('/api/chess/new', { method: 'POST', body: JSON.stringify({ color }) }),
   playChessMove: (id, from, to) => request(`/api/chess/${id}/move`, { method: 'POST', body: JSON.stringify({ from, to }) }),
   resignChess: (id) => request(`/api/chess/${id}/resign`, { method: 'POST' }),
+
+  // Talking games (20 Questions, Would You Rather, Two Truths, Trivia).
+  getGames: () => request('/api/games'),
+  newGame: (type, opts = {}) => request('/api/games/new', { method: 'POST', body: JSON.stringify({ type, ...opts }) }),
+  gameAct: (id, action, input = {}) => request(`/api/games/${id}/act`, { method: 'POST', body: JSON.stringify({ action, ...input }) }),
 };

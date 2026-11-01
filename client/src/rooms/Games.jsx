@@ -1,211 +1,44 @@
-import { useEffect, useState } from 'react';
-import { api } from '../api.js';
+import { useState } from 'react';
+import Chess from './games/Chess.jsx';
+import TalkGame from './games/TalkGame.jsx';
 
-// Games — chess with Knox. Tap one of your pieces, then tap where it goes.
-// The server checks every move; Knox chooses his own from the legal ones.
+// Games — a room of its own for playing with Knox. Each game remembers where
+// you left off, and Knox remembers every game you finish.
 
-const GLYPH = { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' };
-const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-
-const REASON = {
-  checkmate: 'checkmate',
-  stalemate: 'stalemate',
-  resignation: 'resignation',
-  'threefold repetition': 'threefold repetition',
-  'insufficient material': 'not enough pieces left',
-  'the fifty-move rule': 'the fifty-move rule',
-};
-
-function squareName(rankIdx, fileIdx) {
-  return FILES[fileIdx] + (8 - rankIdx);
-}
-
-function resultLine(g) {
-  if (!g || g.status !== 'over') return '';
-  const how = REASON[g.endReason] || g.endReason;
-  if (g.result === 'draw') return `A draw — ${how}.`;
-  return g.result === 'elira' ? `You won — ${how}. 🔥` : `Knox won — ${how}.`;
-}
-
-// Moves a piece locally so the board responds straight away while Knox thinks.
-function optimistic(game, from, to) {
-  const board = game.board.map((r) => r.slice());
-  const f = { r: 8 - Number(from[1]), c: FILES.indexOf(from[0]) };
-  const t = { r: 8 - Number(to[1]), c: FILES.indexOf(to[0]) };
-  board[t.r][t.c] = board[f.r][f.c];
-  board[f.r][f.c] = null;
-  return { ...game, board, herTurn: false, legal: [], lastMove: { from, to } };
-}
-
-function Board({ game, selected, onSquare }) {
-  const flip = game.eliraColor === 'b';
-  const ranks = [...Array(8).keys()];
-  const order = flip ? ranks.slice().reverse() : ranks;
-  const targets = new Set(selected ? game.legal.filter((m) => m.from === selected).map((m) => m.to) : []);
-  const kingInCheck = game.inCheck ? game.turn : null;
-
-  return (
-    <div className="chess-board" role="grid" aria-label="Chess board">
-      {/* Rows run rank 8→1 (or 1→8 when she plays black); columns a→h (or h→a). */}
-      {order.map((r) =>
-        order.map((fileIdx) => {
-          const sq = squareName(r, fileIdx);
-          const piece = game.board[r][fileIdx];
-          const dark = (r + fileIdx) % 2 === 1;
-          const isLast = game.lastMove && (game.lastMove.from === sq || game.lastMove.to === sq);
-          const isCheck = piece && piece.type === 'k' && piece.color === kingInCheck;
-          const cls = [
-            'chess-sq',
-            dark ? 'chess-sq--dark' : 'chess-sq--light',
-            isLast ? 'chess-sq--last' : '',
-            selected === sq ? 'chess-sq--selected' : '',
-            isCheck ? 'chess-sq--check' : '',
-          ].join(' ');
-          return (
-            <button key={sq} type="button" className={cls} onClick={() => onSquare(sq, piece)} aria-label={sq}>
-              {piece && (
-                <span className={`chess-piece chess-piece--${piece.color}`}>{GLYPH[piece.type]}{'︎'}</span>
-              )}
-              {targets.has(sq) && <span className={piece ? 'chess-target chess-target--capture' : 'chess-target'} />}
-            </button>
-          );
-        })
-      )}
-    </div>
-  );
-}
+const GAMES = [
+  { key: 'chess', name: 'Chess', blurb: 'A board you tap to move. He chooses his own moves.', icon: '♞' },
+  { key: '20q', name: '20 Questions', blurb: 'One of you thinks of something; the other has twenty questions.', icon: '❓' },
+  { key: 'wyr', name: 'Would You Rather', blurb: 'Impossible choices — and he has to choose too.', icon: '⚖️' },
+  { key: '2t1l', name: 'Two Truths and a Lie', blurb: 'His truths are real. Can you find the lie?', icon: '🎭' },
+  { key: 'trivia', name: 'Trivia', blurb: 'Ten questions on any topic you like, hosted by him.', icon: '✨' },
+  { key: 'wordle', name: 'Wordle', blurb: 'A daily word you solve together.', icon: '🟩', soon: true },
+  { key: 'cards', name: 'Cards', blurb: 'Blackjack, Go Fish and Crazy Eights.', icon: '🃏', soon: true },
+];
 
 export default function Games() {
-  const [game, setGame] = useState(null);
-  const [past, setPast] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState(null);
-  const [thinking, setThinking] = useState(false);
-  const [error, setError] = useState('');
-  const [confirmResign, setConfirmResign] = useState(false);
-  const [viewing, setViewing] = useState(null); // a finished game being looked back at
-
-  function load() {
-    return api.getChess().then((d) => { setGame(d.game); setPast(d.past || []); }).catch(() => setError('Could not load games.'));
-  }
-
-  useEffect(() => { load().finally(() => setLoading(false)); }, []);
-
-  async function start(color) {
-    setError(''); setThinking(color !== 'w'); setViewing(null);
-    try {
-      const d = await api.newChessGame(color);
-      setGame(d.game);
-    } catch (e) { setError('Could not start a game.'); }
-    finally { setThinking(false); }
-  }
-
-  async function onSquare(sq, piece) {
-    if (!game || !game.herTurn || thinking) return;
-    if (selected) {
-      const move = game.legal.find((m) => m.from === selected && m.to === sq);
-      if (move) {
-        setSelected(null); setError(''); setThinking(true);
-        setGame(optimistic(game, move.from, move.to));
-        try {
-          const d = await api.playChessMove(game.id, move.from, move.to);
-          setGame(d.game);
-          if (d.game.status === 'over') load();
-        } catch (e) {
-          setError('That move didn\'t go through — try again.');
-          await load();
-        } finally { setThinking(false); }
-        return;
-      }
-    }
-    if (piece && piece.color === game.eliraColor && game.legal.some((m) => m.from === sq)) setSelected(sq);
-    else setSelected(null);
-  }
-
-  async function resign() {
-    if (!confirmResign) { setConfirmResign(true); return; }
-    setConfirmResign(false); setThinking(true);
-    try { const d = await api.resignChess(game.id); setGame(d.game); load(); }
-    catch (e) { setError('Could not resign.'); }
-    finally { setThinking(false); }
-  }
-
-  async function view(id) {
-    try { const d = await api.getChessGame(id); setViewing(d.game); } catch (e) {}
-  }
-
-  const shown = viewing || game;
-  const knoxSaid = (shown && shown.comments ? shown.comments.slice(-4) : []).slice().reverse();
-
-  let status = '';
-  if (shown && shown.status === 'over') status = resultLine(shown);
-  else if (thinking) status = 'Knox is thinking…';
-  else if (shown && shown.herTurn) status = shown.inCheck ? 'Check — your move.' : 'Your move.';
-  else if (shown) status = 'Knox\'s move.';
+  const [open, setOpen] = useState(null);
+  const game = GAMES.find((g) => g.key === open);
 
   return (
     <div className="room">
-      <h1>Games</h1>
-      <p className="room-subtitle">Chess with Knox. He chooses his own moves — he plays like someone who loves the game, not like an engine.</p>
-
-      {loading && <p className="room-subtitle">Loading…</p>}
-      {error && <p className="chess-error">{error}</p>}
-
-      {!loading && (!game || game.status === 'over') && !viewing && (
-        <div className="chess-new">
-          <p className="entry-body">{game && game.status === 'over' ? 'Play again?' : 'Start a game:'}</p>
-          <div className="chess-buttons">
-            <button type="button" onClick={() => start('w')} disabled={thinking}>Play white</button>
-            <button type="button" onClick={() => start('b')} disabled={thinking}>Play black</button>
-            <button type="button" onClick={() => start('random')} disabled={thinking}>Surprise me</button>
-          </div>
-        </div>
-      )}
-
-      {shown && (
+      <h1>{game ? game.name : 'Games'}</h1>
+      {game ? (
         <>
-          {viewing && (
-            <button type="button" className="notes-tab" onClick={() => setViewing(null)}>← Back</button>
-          )}
-          <p className={`chess-status${shown.inCheck && shown.status !== 'over' ? ' chess-status--check' : ''}`}>{status}</p>
-          <Board game={shown} selected={viewing ? null : selected} onSquare={viewing ? () => {} : onSquare} />
-
-          {knoxSaid.length > 0 && (
-            <div className="chess-said">
-              {knoxSaid.map((c, i) => (
-                <p key={i} className={c.system ? 'entry-meta' : 'entry-body chess-said-line'}>
-                  {c.system ? c.text : <>“{c.text}”</>}
-                </p>
-              ))}
-            </div>
-          )}
-
-          {shown.moves.length > 0 && (
-            <p className="chess-moves">
-              {shown.moves.map((m, i) => (i % 2 === 0 ? `${i / 2 + 1}. ${m} ` : `${m}  `))}
-            </p>
-          )}
-
-          {!viewing && shown.status === 'active' && (
-            <button type="button" className="chess-resign" onClick={resign} disabled={thinking}>
-              {confirmResign ? 'Tap again to resign' : 'Resign'}
-            </button>
-          )}
+          <button type="button" className="notes-tab" onClick={() => setOpen(null)}>← All games</button>
+          {game.key === 'chess' ? <Chess /> : <TalkGame type={game.key} />}
         </>
-      )}
-
-      {past.length > 0 && (
+      ) : (
         <>
-          <h2 className="integrity-history-title">Past games</h2>
-          {past.map((p) => (
-            <button key={p.id} type="button" className="chess-past" onClick={() => view(p.id)}>
-              <span>{p.result === 'draw' ? 'Draw' : p.result === 'elira' ? 'You won' : 'Knox won'}</span>
-              <span className="entry-meta">
-                {REASON[p.end_reason] || p.end_reason} · {Math.ceil(p.plies / 2)} moves · you played {p.elira_color === 'w' ? 'white' : 'black'} ·{' '}
-                {new Date(p.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-              </span>
-            </button>
-          ))}
+          <p className="room-subtitle">Play with Knox. He remembers every game you finish.</p>
+          <div className="games-hub">
+            {GAMES.map((g) => (
+              <button key={g.key} type="button" className="games-card" disabled={g.soon} onClick={() => setOpen(g.key)}>
+                <span className="games-card-icon" aria-hidden="true">{g.icon}</span>
+                <span className="games-card-name">{g.name}{g.soon && <span className="games-soon"> · coming soon</span>}</span>
+                <span className="entry-meta">{g.blurb}</span>
+              </button>
+            ))}
+          </div>
         </>
       )}
     </div>

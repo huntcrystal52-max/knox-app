@@ -886,3 +886,43 @@ body {
   padding: 10px 14px;
   margin-bottom: 8px;
 }
+
+/* ── Games hub and talking games ────────────────────────────────────────── */
+.games-hub { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.games-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  text-align: left; background: var(--surface); color: var(--text);
+  border: 1px solid transparent; border-radius: 14px; padding: 14px;
+}
+.games-card:not(:disabled):hover { border-color: var(--accent); }
+.games-card:disabled { opacity: 0.55; }
+.games-card-icon { font-size: 1.6rem; }
+.games-card-name { font-weight: 600; }
+.games-soon { color: var(--muted); font-weight: 400; font-size: 0.85rem; }
+.game-transcript {
+  background: var(--surface); border-radius: 12px; padding: 10px 14px; margin: 10px 0;
+  max-height: 46vh; overflow-y: auto;
+}
+.game-line { margin: 6px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.game-line--knox { color: var(--text); }
+.game-line--elira { color: var(--accent); text-align: right; }
+.game-line--system { color: var(--muted); font-size: 0.85rem; text-align: center; }
+.game-send { display: flex; gap: 8px; margin: 10px 0; }
+.game-send input, .game-why, .game-three input {
+  flex: 1; min-width: 0; background: var(--surface); color: var(--text);
+  border: 1px solid rgba(152, 163, 189, 0.3); border-radius: 8px; padding: 9px 12px; font: inherit;
+}
+.game-send button, .game-three button {
+  background: var(--accent); color: #1a1a1a; border: none; border-radius: 8px; padding: 8px 14px; font-weight: 600;
+}
+.game-why { width: 100%; margin: 6px 0 4px; box-sizing: border-box; }
+.game-options { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
+.game-options button {
+  text-align: left; background: var(--surface); color: var(--text);
+  border: 1px solid rgba(232, 168, 124, 0.45); border-radius: 10px; padding: 11px 14px; font: inherit;
+}
+.game-three { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.game-question { font-weight: 600; margin-top: 10px; }
+.game-result { border-radius: 10px; padding: 8px 12px; margin: 8px 0; }
+.game-result--right { background: rgba(120, 200, 140, 0.15); }
+.game-result--wrong { background: rgba(224, 108, 108, 0.12); }
