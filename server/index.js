@@ -16,6 +16,7 @@ import houseRoutes from './routes/house.js';
 import workshopRoutes from './routes/workshop.js';
 import integrityRoutes from './routes/integrity.js';
 import notesRoutes from './routes/notes.js';
+import chessRoutes from './routes/chess.js';
 
 const app = express();
 // Railway sits in front of the app as a proxy. This tells Express to trust its
@@ -88,6 +89,7 @@ app.use('/api/house', houseRoutes);
 app.use('/api/workshop', workshopRoutes);
 app.use('/api/integrity', integrityRoutes);
 app.use('/api/notes', notesRoutes);
+app.use('/api/chess', chessRoutes);
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 const clientDist = path.join(path.dirname(fileURLToPath(import.meta.url)), '../client/dist');

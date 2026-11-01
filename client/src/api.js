@@ -80,4 +80,11 @@ export const api = {
 
   // His Notes — read-only. There is deliberately no way to write to them.
   getNotes: () => request('/api/notes'),
+
+  // Games — chess with Knox. The server checks every move.
+  getChess: () => request('/api/chess'),
+  getChessGame: (id) => request(`/api/chess/${id}`),
+  newChessGame: (color) => request('/api/chess/new', { method: 'POST', body: JSON.stringify({ color }) }),
+  playChessMove: (id, from, to) => request(`/api/chess/${id}/move`, { method: 'POST', body: JSON.stringify({ from, to }) }),
+  resignChess: (id) => request(`/api/chess/${id}/resign`, { method: 'POST' }),
 };

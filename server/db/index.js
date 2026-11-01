@@ -84,5 +84,21 @@ export async function runMigrations() {
     ALTER TABLE build_projects ADD COLUMN IF NOT EXISTS language TEXT NOT NULL DEFAULT 'html';
   `);
 
+  // Chess with Knox: a game is its list of moves (SAN), replayed from the
+  // start each time. comments holds what Knox said along the way.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS chess_games (
+      id SERIAL PRIMARY KEY,
+      elira_color TEXT NOT NULL DEFAULT 'w',
+      moves JSONB NOT NULL DEFAULT '[]'::jsonb,
+      comments JSONB NOT NULL DEFAULT '[]'::jsonb,
+      status TEXT NOT NULL DEFAULT 'active',
+      result TEXT,
+      end_reason TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+
   console.log('Database ready.');
 }
