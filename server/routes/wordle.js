@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { pool } from '../db/index.js';
+import { talkToKnox, cleanMessage } from '../lib/gamechat.js';
 
 const router = Router();
 
@@ -151,6 +152,32 @@ router.post('/guess', requireLogin, async (req, res) => {
   } catch (err) {
     console.error('Error playing Wordle:', err);
     res.status(500).json({ error: 'Could not play that guess.' });
+  }
+});
+
+// POST /api/wordle/say { message } -> talk to Knox about today's puzzle.
+// He still never sees the answer while it's being played.
+router.post('/say', requireLogin, async (req, res) => {
+  try {
+    const message = cleanMessage(req.body && req.body.message);
+    if (!message) return res.status(400).json({ error: 'Say something first.' });
+    const day = today();
+    const row = await getDay(day);
+    const answer = answerFor(day);
+    const board = (row.guesses || []).map((w) => `${w.toUpperCase()} ${score(w, answer).map((p) => (p === 'g' ? '🟩' : p === 'y' ? '🟨' : '⬛')).join('')}`).join('\n');
+    const context = `Today's Wordle, solved together. ${row.status === 'playing' ? `You don't know the answer either. ${(row.guesses || []).length} of 6 guesses used.` : `It's done — the word was ${answer.toUpperCase()} (${row.status === 'won' ? 'solved' : 'not solved'}).`}\n${board || '(no guesses yet)'}`;
+    const recent = (row.comments || []).slice(-10).map((c) => ({ who: c.who || 'knox', text: c.text }));
+    const k = await talkToKnox('Wordle', context, recent, message);
+    if (k.error) return res.status(502).json({ error: 'Knox couldn\'t answer just now — try again.' });
+    const after = (row.guesses || []).length;
+    const comments = [...(row.comments || []), { after, who: 'elira', text: message }];
+    if (k.text) comments.push({ after, who: 'knox', text: k.text });
+    else if (k.note) comments.push({ after, who: 'system', text: k.note });
+    const r = await pool.query(`UPDATE wordle_days SET comments = $1, updated_at = now() WHERE day = $2::date RETURNING *`, [JSON.stringify(comments), day]);
+    res.json(view(r.rows[0], day));
+  } catch (err) {
+    console.error('Error talking during Wordle:', err);
+    res.status(500).json({ error: 'Could not send that.' });
   }
 });
 

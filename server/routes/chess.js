@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Chess } from 'chess.js';
 import { pool } from '../db/index.js';
+import { talkToKnox, cleanMessage } from '../lib/gamechat.js';
 
 const router = Router();
 
@@ -226,6 +227,35 @@ router.post('/:id/resign', requireLogin, async (req, res) => {
   } catch (err) {
     console.error('Error resigning:', err);
     res.status(500).json({ error: 'Could not resign.' });
+  }
+});
+
+// POST /api/chess/:id/say { message } -> talk to Knox while you play.
+router.post('/:id/say', requireLogin, async (req, res) => {
+  try {
+    const message = cleanMessage(req.body && req.body.message);
+    if (!message) return res.status(400).json({ error: 'Say something first.' });
+    const r = await pool.query(`SELECT * FROM chess_games WHERE id = $1`, [req.params.id]);
+    let row = r.rows[0];
+    if (!row) return res.status(404).json({ error: 'No such game.' });
+    const game = replay(row.moves);
+    const knoxColor = row.elira_color === 'w' ? 'black' : 'white';
+    const context = `You are playing ${knoxColor}. ${row.status === 'over' ? `The game is over (${row.result === 'draw' ? 'a draw' : row.result === 'knox' ? 'you won' : 'she won'}, ${row.end_reason}).` : game.turn() === row.elira_color ? 'It is her move.' : 'It is your move.'}${game.inCheck() ? ' Someone is in check.' : ''}
+Board (capitals are White, lowercase Black):
+${game.ascii()}
+Moves so far: ${game.history().join(' ') || '(none yet)'}`;
+    const recent = (row.comments || []).slice(-10).map((c) => ({ who: c.who || (c.system ? 'system' : 'knox'), text: c.text }));
+    const k = await talkToKnox('chess', context, recent, message);
+    if (k.error) return res.status(502).json({ error: 'Knox couldn\'t answer just now — try again.' });
+    const ply = game.history().length;
+    row.comments = [...(row.comments || []), { ply, who: 'elira', text: message }];
+    if (k.text) row.comments.push({ ply, who: 'knox', text: k.text });
+    else if (k.note) row.comments.push({ ply, system: true, text: k.note });
+    row = await save(row);
+    res.json({ game: stateOf(row) });
+  } catch (err) {
+    console.error('Error talking during chess:', err);
+    res.status(500).json({ error: 'Could not send that.' });
   }
 });
 

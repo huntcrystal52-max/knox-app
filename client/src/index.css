@@ -969,3 +969,7 @@ body {
 .card:disabled { cursor: default; }
 .card--dim { opacity: 0.4; }
 .card--back { background: repeating-linear-gradient(45deg, #2e3f6b, #2e3f6b 6px, #3a4f85 6px, #3a4f85 12px); border-color: #22305a; }
+
+/* Talking during games */
+.game-talk { margin-top: 6px; }
+.chess-talk { max-height: 30vh; }

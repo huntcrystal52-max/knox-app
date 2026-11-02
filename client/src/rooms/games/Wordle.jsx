@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api.js';
+import GameTalk from './GameTalk.jsx';
 
 // Wordle, together. One shared word a day. You guess; Knox thinks it through
 // with you and may suggest a word — tap his suggestion to try it. He doesn't
@@ -34,6 +35,13 @@ export default function Wordle() {
     finally { setBusy(false); }
   }
 
+  async function say(text) {
+    setBusy(true); setError('');
+    try { setW(await api.sayWordle(text)); return true; }
+    catch (e) { setError('Knox couldn\'t answer just now — try again.'); return false; }
+    finally { setBusy(false); }
+  }
+
   function key(k) {
     if (!w || w.status !== 'playing' || busy) return;
     setError('');
@@ -51,7 +59,8 @@ export default function Wordle() {
     else if (i === w.guesses.length && w.status === 'playing') rows.push([...Array(5)].map((_, j) => <Tile key={j} ch={typed[j]} />));
     else rows.push([...Array(5)].map((_, j) => <Tile key={j} />));
   }
-  const last = w.comments[w.comments.length - 1];
+  const talk = w.comments.slice(-6);
+  const lastKnox = [...w.comments].reverse().find((c) => !c.who || c.who === 'knox');
 
   return (
     <div>
@@ -64,16 +73,19 @@ export default function Wordle() {
       {error && <p className="chess-error">{error}</p>}
       {busy && <p className="chess-status">Knox is thinking…</p>}
 
-      {last && (
-        <div className="chess-said">
-          <p className="entry-body chess-said-line">“{last.text}”</p>
-          {last.suggestion && w.status === 'playing' && (
-            <button type="button" className="wordle-suggest" disabled={busy} onClick={() => submit(last.suggestion)}>
-              Try {last.suggestion.toUpperCase()}
+      {talk.length > 0 && (
+        <div className="game-transcript">
+          {talk.map((c, i) => (
+            <p key={i} className={`game-line game-line--${c.who === 'elira' ? 'elira' : c.who === 'system' ? 'system' : 'knox'}`}>{c.text}</p>
+          ))}
+          {lastKnox && lastKnox.suggestion && w.status === 'playing' && (
+            <button type="button" className="wordle-suggest" disabled={busy} onClick={() => submit(lastKnox.suggestion)}>
+              Try {lastKnox.suggestion.toUpperCase()}
             </button>
           )}
         </div>
       )}
+      <GameTalk onSend={say} busy={busy} />
 
       {w.status === 'playing' && (
         <>

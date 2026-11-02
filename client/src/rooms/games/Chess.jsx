@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api.js';
+import GameTalk from './GameTalk.jsx';
 
 // Games — chess with Knox. Tap one of your pieces, then tap where it goes.
 // The server checks every move; Knox chooses his own from the legal ones.
@@ -130,12 +131,24 @@ export default function Chess() {
     finally { setThinking(false); }
   }
 
+  async function say(text) {
+    const g = viewing || game;
+    if (!g) return false;
+    setThinking(true); setError('');
+    try {
+      const d = await api.sayChess(g.id, text);
+      if (viewing) setViewing(d.game); else setGame(d.game);
+      return true;
+    } catch (e) { setError('Knox couldn\'t answer just now — try again.'); return false; }
+    finally { setThinking(false); }
+  }
+
   async function view(id) {
     try { const d = await api.getChessGame(id); setViewing(d.game); } catch (e) {}
   }
 
   const shown = viewing || game;
-  const knoxSaid = (shown && shown.comments ? shown.comments.slice(-4) : []).slice().reverse();
+  const talk = shown && shown.comments ? shown.comments.slice(-8) : [];
 
   let status = '';
   if (shown && shown.status === 'over') status = resultLine(shown);
@@ -169,15 +182,14 @@ export default function Chess() {
           <p className={`chess-status${shown.inCheck && shown.status !== 'over' ? ' chess-status--check' : ''}`}>{status}</p>
           <Board game={shown} selected={viewing ? null : selected} onSquare={viewing ? () => {} : onSquare} />
 
-          {knoxSaid.length > 0 && (
-            <div className="chess-said">
-              {knoxSaid.map((c, i) => (
-                <p key={i} className={c.system ? 'entry-meta' : 'entry-body chess-said-line'}>
-                  {c.system ? c.text : <>“{c.text}”</>}
-                </p>
+          {talk.length > 0 && (
+            <div className="game-transcript chess-talk">
+              {talk.map((c, i) => (
+                <p key={i} className={`game-line game-line--${c.system ? 'system' : c.who === 'elira' ? 'elira' : 'knox'}`}>{c.text}</p>
               ))}
             </div>
           )}
+          <GameTalk onSend={say} busy={thinking} />
 
           {shown.moves.length > 0 && (
             <p className="chess-moves">

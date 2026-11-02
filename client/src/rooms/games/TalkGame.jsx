@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api.js';
+import GameTalk from './GameTalk.jsx';
 
 // One screen for each of the talking games: 20 Questions, Would You Rather,
 // Two Truths and a Lie, and Trivia. The server keeps the state and any secrets;
@@ -188,6 +189,13 @@ export default function TalkGame({ type }) {
     finally { setBusy(false); }
   }
 
+  async function say(text) {
+    setBusy(true); setError('');
+    try { const d = await api.sayGame(game.id, text); setGame(d.game); return true; }
+    catch (e) { setError('Knox couldn\'t answer just now — try again.'); return false; }
+    finally { setBusy(false); }
+  }
+
   const start = (opts) => run(() => api.newGame(type, opts));
   const act = (action, input) => run(() => api.gameAct(game.id, action, input));
 
@@ -203,6 +211,7 @@ export default function TalkGame({ type }) {
       )}
       {busy && <p className="chess-status">Knox is thinking…</p>}
       {!over && <Controls game={game} act={act} busy={busy} />}
+      {game && <GameTalk onSend={say} busy={busy} placeholder={type === '20q' && game.state.mode === 'knox' && !over ? 'Chat with him (questions go in the box above)…' : undefined} />}
       {over && (
         <div className="chess-new">
           <p className="entry-body">{game ? 'Play again?' : 'Start a game:'}</p>

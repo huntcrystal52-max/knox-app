@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { pool } from '../db/index.js';
+import { talkToKnox, cleanMessage } from '../lib/gamechat.js';
 
 const router = Router();
 
@@ -376,6 +377,35 @@ router.post('/new', requireLogin, async (req, res) => {
   } catch (err) {
     console.error('Error starting a card game:', err);
     res.status(500).json({ error: 'Could not deal.' });
+  }
+});
+
+// POST /api/cards/:id/say { message } -> talk to Knox while you play cards.
+// He knows his own hand (it's his) but is told to keep it to himself.
+router.post('/:id/say', requireLogin, async (req, res) => {
+  try {
+    const message = cleanMessage(req.body && req.body.message);
+    if (!message) return res.status(400).json({ error: 'Say something first.' });
+    const r = await pool.query(`SELECT * FROM games WHERE id = $1`, [req.params.id]);
+    let row = r.rows[0];
+    if (!row || !TYPES.includes(row.type)) return res.status(404).json({ error: 'No such game.' });
+    const s = row.state || {};
+    const h = s.hidden || {};
+    let context = '';
+    if (row.type === 'blackjack') context = `You're dealing. Score — Elira ${s.score.elira}, you ${s.score.knox}. Her hand: ${(s.hand || []).join(' ') || 'none yet'}. Your showing card(s): ${(s.knoxShowing || []).join(' ') || 'none'}.`;
+    if (row.type === 'gofish') context = `Her books: ${s.books.elira.join(' ') || 'none'}; yours: ${s.books.knox.join(' ') || 'none'}. Cards in the pond: ${s.deckCount}. Your hand (keep it secret): ${(h.knoxHand || []).join(' ')}. It's ${s.turn === 'elira' ? 'her' : 'your'} turn.`;
+    if (row.type === 'eights') context = `On the pile: ${s.top}, suit to follow ${s.suit}. She has ${(s.hand || []).length} cards. Your hand (keep it secret): ${(h.knoxHand || []).join(' ')}. It's ${s.turn === 'elira' ? 'her' : 'your'} turn.`;
+    if (row.status === 'over') context = 'This game has finished. ' + context;
+    const k = await talkToKnox(NAMES[row.type], context, (row.transcript || []).slice(-10), message);
+    if (k.error) return res.status(502).json({ error: 'Knox couldn\'t answer just now — try again.' });
+    row.transcript = [...(row.transcript || []), { who: 'elira', text: message, chat: true }];
+    if (k.text) row.transcript.push({ who: 'knox', text: k.text, chat: true });
+    else if (k.note) row.transcript.push({ who: 'system', text: k.note });
+    row = await save(row);
+    res.json({ game: view(row) });
+  } catch (err) {
+    console.error('Error talking during cards:', err);
+    res.status(500).json({ error: 'Could not send that.' });
   }
 });
 

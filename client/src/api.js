@@ -101,4 +101,10 @@ export const api = {
   // Cards — Blackjack, Go Fish, Crazy Eights. The server deals.
   newCardGame: (type) => request('/api/cards/new', { method: 'POST', body: JSON.stringify({ type }) }),
   cardAct: (id, action, input = {}) => request(`/api/cards/${id}/act`, { method: 'POST', body: JSON.stringify({ action, ...input }) }),
+
+  // Talking to Knox during any game.
+  sayChess: (id, message) => request(`/api/chess/${id}/say`, { method: 'POST', body: JSON.stringify({ message }) }),
+  sayGame: (id, message) => request(`/api/games/${id}/say`, { method: 'POST', body: JSON.stringify({ message }) }),
+  sayCards: (id, message) => request(`/api/cards/${id}/say`, { method: 'POST', body: JSON.stringify({ message }) }),
+  sayWordle: (message) => request('/api/wordle/say', { method: 'POST', body: JSON.stringify({ message }) }),
 };

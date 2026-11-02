@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { pool } from '../db/index.js';
+import { talkToKnox, cleanMessage } from '../lib/gamechat.js';
 
 const router = Router();
 
@@ -325,6 +326,32 @@ router.post('/new', requireLogin, async (req, res) => {
     if (err instanceof KnoxUnavailable) return res.status(502).json({ error: 'Knox couldn\'t answer just now — try again.' });
     console.error('Error starting a game:', err);
     res.status(500).json({ error: 'Could not start that game.' });
+  }
+});
+
+// POST /api/games/:id/say { message } -> talk to Knox during a game.
+// He's given the game as it stands, including his own secrets (which he
+// already knows, and is told to keep).
+router.post('/:id/say', requireLogin, async (req, res) => {
+  try {
+    const message = cleanMessage(req.body && req.body.message);
+    if (!message) return res.status(400).json({ error: 'Say something first.' });
+    const r = await pool.query(`SELECT * FROM games WHERE id = $1`, [req.params.id]);
+    let row = r.rows[0];
+    if (!row || !TYPES.includes(row.type)) return res.status(404).json({ error: 'No such game.' });
+    const { hidden, ...pub } = row.state || {};
+    const secrets = row.type === '20q' && hidden && hidden.secret ? `\nYour secret (don't reveal it): ${hidden.secret}` : '';
+    const context = `${row.status === 'over' ? 'This game has finished.' : 'The game is in progress.'}\nState: ${JSON.stringify(pub).slice(0, 1500)}${secrets}`;
+    const k = await talkToKnox(NAMES[row.type], context, (row.transcript || []).slice(-10), message);
+    if (k.error) return res.status(502).json({ error: 'Knox couldn\'t answer just now — try again.' });
+    row.transcript = [...(row.transcript || []), { who: 'elira', text: message, chat: true }];
+    if (k.text) row.transcript.push({ who: 'knox', text: k.text, chat: true });
+    else if (k.note) row.transcript.push({ who: 'system', text: k.note });
+    row = await save(row);
+    res.json({ game: view(row) });
+  } catch (err) {
+    console.error('Error talking during a game:', err);
+    res.status(500).json({ error: 'Could not send that.' });
   }
 });
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api.js';
+import GameTalk from './GameTalk.jsx';
 
 // Cards with Knox: Blackjack, Go Fish and Crazy Eights. The server deals and
 // keeps his hand hidden — you only ever see your own cards.
@@ -166,6 +167,12 @@ export default function Cards() {
   const g = games[pick];
   const info = GAMES.find((x) => x.key === pick);
   const act = (action, input) => run(() => api.cardAct(g.id, action, input));
+  async function say(text) {
+    setBusy(true); setError('');
+    try { const d = await api.sayCards(g.id, text); setGames((m) => ({ ...m, [d.game.type]: d.game })); return true; }
+    catch (e) { setError('Knox couldn\'t answer just now — try again.'); return false; }
+    finally { setBusy(false); }
+  }
   const live = g && g.status === 'active';
 
   return (
@@ -178,6 +185,7 @@ export default function Cards() {
       {g && pick === 'blackjack' && live && <Blackjack g={g} act={act} busy={busy} />}
       {g && pick === 'gofish' && <GoFish g={g} act={act} busy={busy} />}
       {g && pick === 'eights' && <Eights g={g} act={act} busy={busy} />}
+      {g && <GameTalk onSend={say} busy={busy} />}
       {(!g || !live) && (
         <div className="chess-buttons">
           <button type="button" disabled={busy} onClick={() => run(() => api.newCardGame(pick))}>{g ? 'New game' : 'Deal me in'}</button>
