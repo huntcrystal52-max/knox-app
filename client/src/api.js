@@ -107,4 +107,10 @@ export const api = {
   sayGame: (id, message) => request(`/api/games/${id}/say`, { method: 'POST', body: JSON.stringify({ message }) }),
   sayCards: (id, message) => request(`/api/cards/${id}/say`, { method: 'POST', body: JSON.stringify({ message }) }),
   sayWordle: (message) => request('/api/wordle/say', { method: 'POST', body: JSON.stringify({ message }) }),
+
+  // Gifts — his private ideas stay server-side; only shared ones come back.
+  getGifts: () => request('/api/gifts'),
+  addWish: (wish) => request('/api/gifts/wish', { method: 'POST', body: JSON.stringify(wish) }),
+  giftGot: (id) => request(`/api/gifts/${id}/got`, { method: 'POST' }),
+  removeWish: (id) => request(`/api/gifts/${id}/remove`, { method: 'POST' }),
 };

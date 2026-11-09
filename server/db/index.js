@@ -127,5 +127,22 @@ export async function runMigrations() {
     );
   `);
 
+  // Gift list (Knox-bot creates the same table; whichever starts first wins).
+  // Knox's ideas with status 'idea' are private and never sent to the browser.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS gift_ideas (
+      id SERIAL PRIMARY KEY,
+      for_whom TEXT NOT NULL,
+      added_by TEXT NOT NULL,
+      title TEXT NOT NULL,
+      note TEXT,
+      link TEXT,
+      link_title TEXT,
+      status TEXT NOT NULL DEFAULT 'idea',
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      shared_at TIMESTAMPTZ
+    );
+  `);
+
   console.log('Database ready.');
 }
