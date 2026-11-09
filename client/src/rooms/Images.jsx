@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api.js';
+import ReplyBox from '../components/ReplyBox.jsx';
 
 export default function Images() {
   const [entries, setEntries] = useState([]);
@@ -100,6 +101,7 @@ export default function Images() {
         {!loading && entries.length === 0 && <p className="room-subtitle">Nothing here yet.</p>}
         {entries.map((entry) => {
           const isReacting = reactingIds.has(entry.id);
+          const fromKnox = entry.author === 'Knox';
           return (
             <div key={entry.id} className="image-card">
               <img src={entry.media_url} alt={entry.body || ''} />
@@ -108,15 +110,20 @@ export default function Images() {
                 {entry.author} — {new Date(entry.created_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}
               </span>
 
-              {(entry.knox_reaction || entry.knox_reaction_emoji) && (
+              {/* His own pictures: you react to them. Yours: he reacts. */}
+              {fromKnox && (
+                <ReplyBox room="images" entry={entry} onUpdated={(updated) => setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))} />
+              )}
+
+              {!fromKnox && (entry.knox_reaction || entry.knox_reaction_emoji) && (
                 <p className="knox-reaction">
                   {entry.knox_reaction_emoji && <span className="reaction-emoji">{entry.knox_reaction_emoji} </span>}
                   {entry.knox_reaction}
                 </p>
               )}
-              {isReacting && <p className="knox-reaction knox-reaction--pending">Knox is looking...</p>}
+              {!fromKnox && isReacting && <p className="knox-reaction knox-reaction--pending">Knox is looking...</p>}
 
-              {!entry.knox_reaction && !entry.knox_reaction_emoji && !isReacting && (
+              {!fromKnox && !entry.knox_reaction && !entry.knox_reaction_emoji && !isReacting && (
                 <button
                   type="button"
                   className="ask-knox-button"
