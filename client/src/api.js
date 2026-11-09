@@ -113,4 +113,7 @@ export const api = {
   addWish: (wish) => request('/api/gifts/wish', { method: 'POST', body: JSON.stringify(wish) }),
   giftGot: (id) => request(`/api/gifts/${id}/got`, { method: 'POST' }),
   removeWish: (id) => request(`/api/gifts/${id}/remove`, { method: 'POST' }),
+
+  // Library — everything goes through one endpoint with an action.
+  library: (action, data = {}) => request('/api/library', { method: 'POST', body: JSON.stringify({ action, ...data }) }),
 };

@@ -21,6 +21,7 @@ import gamesRoutes from './routes/games.js';
 import wordleRoutes from './routes/wordle.js';
 import cardsRoutes from './routes/cards.js';
 import giftsRoutes from './routes/gifts.js';
+import libraryRoutes from './routes/library.js';
 
 const app = express();
 // Railway sits in front of the app as a proxy. This tells Express to trust its
@@ -36,7 +37,7 @@ const isProd =
 
 // Raised from the default ~100kb so a phone photo, sent as a base64 data URI
 // to the /api/upload route, doesn't get rejected before it even gets there.
-app.use(express.json({ limit: '15mb' }));
+app.use(express.json({ limit: '40mb' })); // room for book uploads (sent as base64)
 app.use(
   cors({
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
@@ -98,6 +99,7 @@ app.use('/api/games', gamesRoutes);
 app.use('/api/wordle', wordleRoutes);
 app.use('/api/cards', cardsRoutes);
 app.use('/api/gifts', giftsRoutes);
+app.use('/api/library', libraryRoutes);
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 const clientDist = path.join(path.dirname(fileURLToPath(import.meta.url)), '../client/dist');
