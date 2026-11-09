@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api.js';
 import GameTalk from './GameTalk.jsx';
+import MessageText from '../../components/MessageText.jsx';
 
 // One screen for each of the talking games: 20 Questions, Would You Rather,
 // Two Truths and a Lie, and Trivia. The server keeps the state and any secrets;
@@ -13,7 +14,7 @@ function Transcript({ lines }) {
   return (
     <div className="game-transcript">
       {lines.map((l, i) => (
-        <p key={i} className={`game-line game-line--${l.who}`}>{l.text}</p>
+        <p key={i} className={`game-line game-line--${l.who}`}><MessageText text={l.text} /></p>
       ))}
       <span ref={end} />
     </div>

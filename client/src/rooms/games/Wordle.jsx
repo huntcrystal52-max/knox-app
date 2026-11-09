@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api.js';
 import GameTalk from './GameTalk.jsx';
+import MessageText from '../../components/MessageText.jsx';
 
 // Wordle, together. One shared word a day. You guess; Knox thinks it through
 // with you and may suggest a word — tap his suggestion to try it. He doesn't
@@ -76,7 +77,7 @@ export default function Wordle() {
       {talk.length > 0 && (
         <div className="game-transcript">
           {talk.map((c, i) => (
-            <p key={i} className={`game-line game-line--${c.who === 'elira' ? 'elira' : c.who === 'system' ? 'system' : 'knox'}`}>{c.text}</p>
+            <p key={i} className={`game-line game-line--${c.who === 'elira' ? 'elira' : c.who === 'system' ? 'system' : 'knox'}`}><MessageText text={c.text} /></p>
           ))}
           {lastKnox && lastKnox.suggestion && w.status === 'playing' && (
             <button type="button" className="wordle-suggest" disabled={busy} onClick={() => submit(lastKnox.suggestion)}>

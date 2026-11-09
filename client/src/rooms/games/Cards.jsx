@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api.js';
 import GameTalk from './GameTalk.jsx';
+import MessageText from '../../components/MessageText.jsx';
 
 // Cards with Knox: Blackjack, Go Fish and Crazy Eights. The server deals and
 // keeps his hand hidden — you only ever see your own cards.
@@ -28,7 +29,7 @@ function Log({ lines }) {
   if (!lines.length) return null;
   return (
     <div className="game-transcript cards-log">
-      {lines.slice(-14).map((l, i) => <p key={i} className={`game-line game-line--${l.who}`}>{l.text}</p>)}
+      {lines.slice(-14).map((l, i) => <p key={i} className={`game-line game-line--${l.who}`}><MessageText text={l.text} /></p>)}
       <span ref={end} />
     </div>
   );

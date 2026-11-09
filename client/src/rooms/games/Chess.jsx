@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api.js';
 import GameTalk from './GameTalk.jsx';
+import MessageText from '../../components/MessageText.jsx';
 
 // Games — chess with Knox. Tap one of your pieces, then tap where it goes.
 // The server checks every move; Knox chooses his own from the legal ones.
@@ -185,7 +186,7 @@ export default function Chess() {
           {talk.length > 0 && (
             <div className="game-transcript chess-talk">
               {talk.map((c, i) => (
-                <p key={i} className={`game-line game-line--${c.system ? 'system' : c.who === 'elira' ? 'elira' : 'knox'}`}>{c.text}</p>
+                <p key={i} className={`game-line game-line--${c.system ? 'system' : c.who === 'elira' ? 'elira' : 'knox'}`}><MessageText text={c.text} /></p>
               ))}
             </div>
           )}

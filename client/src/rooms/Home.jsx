@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api.js';
+import MessageText from '../components/MessageText.jsx';
 
 export default function Home() {
   const [messages, setMessages] = useState([]);
@@ -91,7 +92,7 @@ export default function Home() {
               (m.error ? ' chat-bubble--error' : '')
             }
           >
-            {m.content}
+            <MessageText text={m.content} />
           </div>
         ))}
         {sending && <div className="chat-bubble chat-bubble--assistant chat-bubble--typing">...</div>}
