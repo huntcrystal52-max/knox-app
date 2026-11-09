@@ -993,3 +993,9 @@ body {
 .game-three select { background: var(--surface); color: var(--text); border: 1px solid rgba(152, 163, 189, 0.3); border-radius: 8px; padding: 9px 12px; font: inherit; }
 .library-howto { margin: 6px 0; }
 .library-howto summary { cursor: pointer; }
+
+/* Photos in the Home chat */
+.chat-attach { background: transparent; border: none; font-size: 1.3rem; padding: 0 6px; }
+.chat-photo-preview { position: relative; display: inline-block; margin: 0 16px 8px; }
+.chat-photo-preview img { max-height: 120px; max-width: 60vw; border-radius: 10px; display: block; }
+.chat-photo-preview button { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 26px; height: 26px; }

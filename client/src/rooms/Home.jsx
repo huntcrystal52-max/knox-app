@@ -7,8 +7,18 @@ export default function Home() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [photo, setPhoto] = useState(null); // a picture waiting to be sent (data URI)
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
+  const fileRef = useRef(null);
+
+  function pickPhoto(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setPhoto(reader.result);
+    reader.readAsDataURL(file);
+  }
 
   useEffect(() => {
     api
@@ -25,17 +35,22 @@ export default function Home() {
   async function handleSend(e) {
     e.preventDefault();
     const text = input.trim();
-    if (!text || sending) return;
+    if ((!text && !photo) || sending) return;
 
     setInput('');
     setSending(true);
+    const sendingPhoto = photo;
+    setPhoto(null);
+    if (fileRef.current) fileRef.current.value = '';
     setMessages((prev) => [
       ...prev,
-      { role: 'user', content: text, created_at: new Date().toISOString() },
+      { role: 'user', content: text, photoPreview: sendingPhoto, created_at: new Date().toISOString() },
     ]);
 
     try {
-      const data = await api.sendChatMessage(text);
+      // A photo goes up to the image store first; Knox gets its link.
+      const imageUrl = sendingPhoto ? (await api.uploadImage(sendingPhoto)).url : null;
+      const data = await api.sendChatMessage(text, imageUrl);
       if (data.text) {
         setMessages((prev) => [
           ...prev,
@@ -92,13 +107,22 @@ export default function Home() {
               (m.error ? ' chat-bubble--error' : '')
             }
           >
+            {m.photoPreview && <img className="msg-gif" src={m.photoPreview} alt="Your photo" />}
             <MessageText text={m.content} />
           </div>
         ))}
         {sending && <div className="chat-bubble chat-bubble--assistant chat-bubble--typing">...</div>}
         <div ref={bottomRef} />
       </div>
+      {photo && (
+        <div className="chat-photo-preview">
+          <img src={photo} alt="Photo to send" />
+          <button type="button" onClick={() => { setPhoto(null); if (fileRef.current) fileRef.current.value = ''; }} aria-label="Remove photo">✕</button>
+        </div>
+      )}
       <form className="chat-input" onSubmit={handleSend}>
+        <input ref={fileRef} type="file" accept="image/*" onChange={pickPhoto} hidden />
+        <button type="button" className="chat-attach" onClick={() => fileRef.current && fileRef.current.click()} disabled={sending} aria-label="Add a photo">📷</button>
         <textarea
           ref={textareaRef}
           value={input}
@@ -107,7 +131,7 @@ export default function Home() {
           rows={1}
           disabled={sending}
         />
-        <button type="submit" disabled={sending || !input.trim()}>
+        <button type="submit" disabled={sending || (!input.trim() && !photo)}>
           Send
         </button>
       </form>

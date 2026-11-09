@@ -28,8 +28,8 @@ export const api = {
 
   // Home room chat — talks to Knox's actual brain via the backend relay.
   getChatHistory: () => request('/api/chat/history'),
-  sendChatMessage: (message) =>
-    request('/api/chat/message', { method: 'POST', body: JSON.stringify({ message }) }),
+  sendChatMessage: (message, imageUrl) =>
+    request('/api/chat/message', { method: 'POST', body: JSON.stringify({ message, imageUrl }) }),
 
   // Images room — uploads to Cloudinary via the backend, returns the URL to
   // then post into the images room like any other entry.

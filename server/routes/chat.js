@@ -37,8 +37,10 @@ router.get('/history', requireLogin, async (req, res) => {
 // logic here, so there's exactly one place that logic lives and the app and
 // Discord stay in sync automatically.
 router.post('/message', requireLogin, async (req, res) => {
-  const { message } = req.body || {};
-  if (!message || typeof message !== 'string' || !message.trim()) {
+  const { message = '', imageUrl = null } = req.body || {};
+  // A photo can be sent on its own, or with words.
+  const hasImage = typeof imageUrl === 'string' && imageUrl.startsWith('https://');
+  if (typeof message !== 'string' || (!message.trim() && !hasImage)) {
     return res.status(400).json({ error: 'message is required' });
   }
 
@@ -49,7 +51,7 @@ router.post('/message', requireLogin, async (req, res) => {
         'Content-Type': 'application/json',
         'x-internal-secret': process.env.INTERNAL_API_SECRET,
       },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, imageUrl: hasImage ? imageUrl : null }),
     });
 
     if (!knoxRes.ok) {
