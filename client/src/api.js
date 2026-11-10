@@ -116,4 +116,7 @@ export const api = {
 
   // Library — everything goes through one endpoint with an action.
   library: (action, data = {}) => request('/api/library', { method: 'POST', body: JSON.stringify({ action, ...data }) }),
+
+  // GIF search for the picker in Home.
+  searchGifs: (q) => request(`/api/gifs?q=${encodeURIComponent(q)}`),
 };

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api.js';
 import MessageText from '../components/MessageText.jsx';
+import GifPicker from '../components/GifPicker.jsx';
 
 export default function Home() {
   const [messages, setMessages] = useState([]);
@@ -8,6 +9,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [photo, setPhoto] = useState(null); // a picture waiting to be sent (data URI)
+  const [gifOpen, setGifOpen] = useState(false);
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
   const fileRef = useRef(null);
@@ -32,9 +34,16 @@ export default function Home() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, sending]);
 
-  async function handleSend(e) {
-    e.preventDefault();
-    const text = input.trim();
+  // A GIF she picked is sent straight away (with anything she'd typed).
+  function sendGif(g) {
+    setGifOpen(false);
+    handleSend(null, `[GIF: ${String(g.title || 'GIF').replace(/[\[\]]/g, '').slice(0, 60)}](${g.url})`);
+  }
+
+  async function handleSend(e, gifMarker) {
+    if (e) e.preventDefault();
+    const typed = input.trim();
+    const text = gifMarker ? `${typed ? typed + ' ' : ''}${gifMarker}` : typed;
     if ((!text && !photo) || sending) return;
 
     setInput('');
@@ -114,6 +123,7 @@ export default function Home() {
         {sending && <div className="chat-bubble chat-bubble--assistant chat-bubble--typing">...</div>}
         <div ref={bottomRef} />
       </div>
+      {gifOpen && <GifPicker onPick={sendGif} onClose={() => setGifOpen(false)} />}
       {photo && (
         <div className="chat-photo-preview">
           <img src={photo} alt="Photo to send" />
@@ -123,6 +133,7 @@ export default function Home() {
       <form className="chat-input" onSubmit={handleSend}>
         <input ref={fileRef} type="file" accept="image/*" onChange={pickPhoto} hidden />
         <button type="button" className="chat-attach" onClick={() => fileRef.current && fileRef.current.click()} disabled={sending} aria-label="Add a photo">📷</button>
+        <button type="button" className="chat-attach chat-gif" onClick={() => setGifOpen((o) => !o)} disabled={sending} aria-label="Send a GIF">GIF</button>
         <textarea
           ref={textareaRef}
           value={input}

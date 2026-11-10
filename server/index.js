@@ -22,6 +22,7 @@ import wordleRoutes from './routes/wordle.js';
 import cardsRoutes from './routes/cards.js';
 import giftsRoutes from './routes/gifts.js';
 import libraryRoutes from './routes/library.js';
+import gifsRoutes from './routes/gifs.js';
 
 const app = express();
 // Railway sits in front of the app as a proxy. This tells Express to trust its
@@ -100,6 +101,7 @@ app.use('/api/wordle', wordleRoutes);
 app.use('/api/cards', cardsRoutes);
 app.use('/api/gifts', giftsRoutes);
 app.use('/api/library', libraryRoutes);
+app.use('/api/gifs', gifsRoutes);
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 const clientDist = path.join(path.dirname(fileURLToPath(import.meta.url)), '../client/dist');
