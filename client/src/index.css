@@ -1023,3 +1023,20 @@ body {
 .msg-video { display: block; width: min(280px, 100%); max-height: 360px; border-radius: 10px; margin: 4px 0 6px; background: #000; }
 .chat-photo-preview video { max-height: 120px; border-radius: 8px; }
 .chat-progress { text-align: center; margin: 0.25rem 0; }
+
+/* Advent */
+.advent-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 12px 0 16px; }
+.advent-door { aspect-ratio: 1; border-radius: 10px; border: 1px solid rgba(232, 168, 124, 0.35); background: linear-gradient(160deg, #3a1f2b, #22161f); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0; font-family: inherit; }
+.advent-num { font-size: 1.15rem; font-weight: 700; }
+.advent-mark { font-size: 0.85rem; min-height: 1em; }
+.advent-door--ready { border-color: var(--accent); box-shadow: 0 0 10px rgba(232, 168, 124, 0.35); }
+.advent-door--today { outline: 2px solid var(--accent); }
+.advent-door--open { background: linear-gradient(160deg, #1f3328, #17221c); opacity: 0.85; }
+.advent-door--picked { transform: scale(0.96); border-color: #fff; }
+.advent-media { display: block; max-width: 100%; max-height: 360px; border-radius: 10px; margin: 6px 0; }
+.advent-contents { margin: 6px 0; }
+.advent-text { min-height: 90px; }
+.advent-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.advent-tools .voice-recording { flex-basis: 100%; }
+.advent-open { width: 100%; padding: 0.8rem; font-size: 1rem; margin: 6px 0; }
+.advent-reaction { border-left: 3px solid var(--accent); padding-left: 10px; margin-top: 8px; white-space: pre-wrap; }

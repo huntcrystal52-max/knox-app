@@ -5,6 +5,7 @@ import { NavLink } from 'react-router-dom';
 // file in src/rooms/. Nothing else about the shell needs to change.
 export const ROOMS = [
   { path: '/', label: 'Home' },
+  { path: '/advent', label: 'Advent 🎄' },
   { path: '/love-notes', label: 'Love Notes' },
   { path: '/sacred', label: 'Sacred' },
   { path: '/stillness', label: 'Stillness' },

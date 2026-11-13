@@ -50,6 +50,9 @@ export const api = {
     });
     return { url: result.secure_url, length: result.duration || null };
   },
+  // The Advent room: { action, ... } → passed through to Knox-bot.
+  advent: (action, data = {}) =>
+    request('/api/advent', { method: 'POST', body: JSON.stringify({ action, ...data }) }),
   // Voice notes: keeps a recording (data URI) → { id }.
   uploadVoice: (dataUri) =>
     request('/api/voice', { method: 'POST', body: JSON.stringify({ audio: dataUri }) }),
