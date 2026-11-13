@@ -23,6 +23,7 @@ import cardsRoutes from './routes/cards.js';
 import giftsRoutes from './routes/gifts.js';
 import libraryRoutes from './routes/library.js';
 import gifsRoutes from './routes/gifs.js';
+import voiceRoutes from './routes/voice.js';
 
 const app = express();
 // Railway sits in front of the app as a proxy. This tells Express to trust its
@@ -88,6 +89,7 @@ app.use('/auth/me', (req, res, next) => {
 app.use('/auth', authRoutes);
 app.use('/api/rooms', roomsRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/voice', voiceRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/build', buildRoutes);
 app.use('/api/status', statusRoutes);

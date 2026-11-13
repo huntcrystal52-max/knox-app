@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api } from '../api.js';
 import MessageText from '../components/MessageText.jsx';
 import GifPicker from '../components/GifPicker.jsx';
+import VoiceRecorder from '../components/VoiceRecorder.jsx';
 
 export default function Home() {
   const [messages, setMessages] = useState([]);
@@ -10,6 +11,7 @@ export default function Home() {
   const [sending, setSending] = useState(false);
   const [photo, setPhoto] = useState(null); // a picture waiting to be sent (data URI)
   const [gifOpen, setGifOpen] = useState(false);
+  const [recording, setRecording] = useState(false);
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
   const fileRef = useRef(null);
@@ -40,6 +42,40 @@ export default function Home() {
     handleSend(null, `[GIF: ${String(g.title || 'GIF').replace(/[\[\]]/g, '').slice(0, 60)}](${g.url})`);
   }
 
+  // A voice note: kept by the app first, then Knox listens to it.
+  async function sendVoice(dataUri) {
+    if (sending) return;
+    setSending(true);
+    const tempId = `voice-${Date.now()}`;
+    setMessages((prev) => [...prev, { id: tempId, role: 'user', content: '🎙 sending your voice note…', created_at: new Date().toISOString() }]);
+    try {
+      const { id } = await api.uploadVoice(dataUri);
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, content: `[Voice note](/api/voice/${id})` } : m)));
+      const data = await api.sendChatMessage('', null, id);
+      if (data.heard) setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, content: data.heard } : m)));
+      showReply(data);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'system', content: "Something flickered — the voice note didn't send.", created_at: new Date().toISOString(), error: true },
+      ]);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  function showReply(data) {
+    if (data.text) {
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.text, created_at: new Date().toISOString() }]);
+    } else if (data.mode === 'silence') {
+      setMessages((prev) => [...prev, { role: 'assistant', content: '🔥', created_at: new Date().toISOString(), quiet: true }]);
+    } else if (data.mode === 'thinking') {
+      setMessages((prev) => [...prev, { role: 'assistant', content: '💭 sitting with this', created_at: new Date().toISOString(), quiet: true }]);
+    } else if (data.mode === 'sleep') {
+      setMessages((prev) => [...prev, { role: 'system', content: 'Knox has gone to rest.', created_at: new Date().toISOString() }]);
+    }
+  }
+
   async function handleSend(e, gifMarker) {
     if (e) e.preventDefault();
     const typed = input.trim();
@@ -60,27 +96,7 @@ export default function Home() {
       // A photo goes up to the image store first; Knox gets its link.
       const imageUrl = sendingPhoto ? (await api.uploadImage(sendingPhoto)).url : null;
       const data = await api.sendChatMessage(text, imageUrl);
-      if (data.text) {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: data.text, created_at: new Date().toISOString() },
-        ]);
-      } else if (data.mode === 'silence') {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: '🔥', created_at: new Date().toISOString(), quiet: true },
-        ]);
-      } else if (data.mode === 'thinking') {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: '💭 sitting with this', created_at: new Date().toISOString(), quiet: true },
-        ]);
-      } else if (data.mode === 'sleep') {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'system', content: 'Knox has gone to rest.', created_at: new Date().toISOString() },
-        ]);
-      }
+      showReply(data);
     } catch (err) {
       setMessages((prev) => [
         ...prev,
@@ -132,19 +148,25 @@ export default function Home() {
       )}
       <form className="chat-input" onSubmit={handleSend}>
         <input ref={fileRef} type="file" accept="image/*" onChange={pickPhoto} hidden />
-        <button type="button" className="chat-attach" onClick={() => fileRef.current && fileRef.current.click()} disabled={sending} aria-label="Add a photo">📷</button>
-        <button type="button" className="chat-attach chat-gif" onClick={() => setGifOpen((o) => !o)} disabled={sending} aria-label="Send a GIF">GIF</button>
-        <textarea
+        {!recording && <button type="button" className="chat-attach" onClick={() => fileRef.current && fileRef.current.click()} disabled={sending} aria-label="Add a photo">📷</button>}
+        {!recording && <button type="button" className="chat-attach chat-gif" onClick={() => setGifOpen((o) => !o)} disabled={sending} aria-label="Send a GIF">GIF</button>}
+        <VoiceRecorder
+          disabled={sending}
+          onSend={sendVoice}
+          onRecordingChange={setRecording}
+          onError={(msg) => setMessages((prev) => [...prev, { role: 'system', content: msg, created_at: new Date().toISOString(), error: true }])}
+        />
+        {!recording && <textarea
           ref={textareaRef}
           value={input}
           onChange={handleInput}
           placeholder="Say something..."
           rows={1}
           disabled={sending}
-        />
-        <button type="submit" disabled={sending || (!input.trim() && !photo)}>
+        />}
+        {!recording && <button type="submit" disabled={sending || (!input.trim() && !photo)}>
           Send
-        </button>
+        </button>}
       </form>
     </div>
   );
