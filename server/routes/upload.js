@@ -76,4 +76,17 @@ router.post('/image', requireLogin, async (req, res) => {
   }
 });
 
+// GET /api/upload/video-signature -> lets the browser send a video straight
+// to Cloudinary. Phone videos are far too big to pass through this server (or
+// Railway's request limits), so the server only signs the upload — the same
+// signature as images use — and the file goes directly from the phone.
+router.get('/video-signature', requireLogin, (req, res) => {
+  if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
+    return res.status(500).json({ error: 'Cloudinary is not configured on the server.' });
+  }
+  const timestamp = Math.floor(Date.now() / 1000);
+  const signature = crypto.createHash('sha1').update(`folder=knox-app&timestamp=${timestamp}` + API_SECRET).digest('hex');
+  res.json({ cloudName: CLOUD_NAME, apiKey: API_KEY, timestamp, signature, folder: 'knox-app' });
+});
+
 export default router;

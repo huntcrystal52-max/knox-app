@@ -37,11 +37,12 @@ router.get('/history', requireLogin, async (req, res) => {
 // logic here, so there's exactly one place that logic lives and the app and
 // Discord stay in sync automatically.
 router.post('/message', requireLogin, async (req, res) => {
-  const { message = '', imageUrl = null, voiceClipId = null } = req.body || {};
+  const { message = '', imageUrl = null, voiceClipId = null, videoUrl = null, videoLength = null } = req.body || {};
   // A photo or a voice note can be sent on its own, or with words.
   const hasImage = typeof imageUrl === 'string' && imageUrl.startsWith('https://');
   const voiceId = Number.isInteger(voiceClipId) ? voiceClipId : null;
-  if (typeof message !== 'string' || (!message.trim() && !hasImage && !voiceId)) {
+  const hasVideo = typeof videoUrl === 'string' && /^https:\/\/res\.cloudinary\.com\/[^/]+\/video\/upload\//.test(videoUrl);
+  if (typeof message !== 'string' || (!message.trim() && !hasImage && !voiceId && !hasVideo)) {
     return res.status(400).json({ error: 'message is required' });
   }
 
@@ -52,7 +53,7 @@ router.post('/message', requireLogin, async (req, res) => {
         'Content-Type': 'application/json',
         'x-internal-secret': process.env.INTERNAL_API_SECRET,
       },
-      body: JSON.stringify({ message, imageUrl: hasImage ? imageUrl : null, voiceClipId: voiceId }),
+      body: JSON.stringify({ message, imageUrl: hasImage ? imageUrl : null, voiceClipId: voiceId, videoUrl: hasVideo ? videoUrl : null, videoLength: Number(videoLength) || null }),
     });
 
     if (!knoxRes.ok) {

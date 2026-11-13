@@ -12,13 +12,34 @@ export default function Home() {
   const [photo, setPhoto] = useState(null); // a picture waiting to be sent (data URI)
   const [gifOpen, setGifOpen] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [clip, setClip] = useState(null); // a video waiting to be sent: { file, preview }
+  const [progress, setProgress] = useState(null); // video upload %
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
   const fileRef = useRef(null);
 
+  function clearPicked() {
+    setPhoto(null);
+    if (clip) URL.revokeObjectURL(clip.preview);
+    setClip(null);
+    if (fileRef.current) fileRef.current.value = '';
+  }
+
   function pickPhoto(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
+    // A video from her phone: sent straight to Cloudinary when she presses Send.
+    if (file.type.startsWith('video/')) {
+      if (file.size > 100 * 1024 * 1024) {
+        setMessages((prev) => [...prev, { role: 'system', content: 'That video is over 100 MB — too big to send. A shorter clip will work.', created_at: new Date().toISOString(), error: true }]);
+        if (fileRef.current) fileRef.current.value = '';
+        return;
+      }
+      setPhoto(null);
+      setClip({ file, preview: URL.createObjectURL(file) });
+      return;
+    }
+    setClip(null);
     const reader = new FileReader();
     reader.onload = () => setPhoto(reader.result);
     reader.readAsDataURL(file);
@@ -80,22 +101,31 @@ export default function Home() {
     if (e) e.preventDefault();
     const typed = input.trim();
     const text = gifMarker ? `${typed ? typed + ' ' : ''}${gifMarker}` : typed;
-    if ((!text && !photo) || sending) return;
+    if ((!text && !photo && !clip) || sending) return;
 
     setInput('');
     setSending(true);
     const sendingPhoto = photo;
+    const sendingClip = clip;
     setPhoto(null);
+    setClip(null);
     if (fileRef.current) fileRef.current.value = '';
     setMessages((prev) => [
       ...prev,
-      { role: 'user', content: text, photoPreview: sendingPhoto, created_at: new Date().toISOString() },
+      { role: 'user', content: text, photoPreview: sendingPhoto, videoPreview: sendingClip && sendingClip.preview, created_at: new Date().toISOString() },
     ]);
 
     try {
       // A photo goes up to the image store first; Knox gets its link.
       const imageUrl = sendingPhoto ? (await api.uploadImage(sendingPhoto)).url : null;
-      const data = await api.sendChatMessage(text, imageUrl);
+      // A video goes straight from the phone to Cloudinary.
+      let video = null;
+      if (sendingClip) {
+        setProgress(0);
+        video = await api.uploadVideo(sendingClip.file, setProgress);
+        setProgress(null);
+      }
+      const data = await api.sendChatMessage(text, imageUrl, null, video);
       showReply(data);
     } catch (err) {
       setMessages((prev) => [
@@ -104,6 +134,7 @@ export default function Home() {
       ]);
     } finally {
       setSending(false);
+      setProgress(null);
       if (textareaRef.current) textareaRef.current.style.height = 'auto';
     }
   }
@@ -133,22 +164,30 @@ export default function Home() {
             }
           >
             {m.photoPreview && <img className="msg-gif" src={m.photoPreview} alt="Your photo" />}
+            {m.videoPreview && <video className="msg-video" src={m.videoPreview} controls playsInline preload="metadata" />}
             <MessageText text={m.content} />
           </div>
         ))}
-        {sending && <div className="chat-bubble chat-bubble--assistant chat-bubble--typing">...</div>}
+        {progress !== null && <p className="entry-meta chat-progress">Sending your video… {progress}%</p>}
+        {sending && progress === null && <div className="chat-bubble chat-bubble--assistant chat-bubble--typing">...</div>}
         <div ref={bottomRef} />
       </div>
       {gifOpen && <GifPicker onPick={sendGif} onClose={() => setGifOpen(false)} />}
       {photo && (
         <div className="chat-photo-preview">
           <img src={photo} alt="Photo to send" />
-          <button type="button" onClick={() => { setPhoto(null); if (fileRef.current) fileRef.current.value = ''; }} aria-label="Remove photo">✕</button>
+          <button type="button" onClick={clearPicked} aria-label="Remove photo">✕</button>
+        </div>
+      )}
+      {clip && (
+        <div className="chat-photo-preview">
+          <video src={clip.preview} muted playsInline preload="metadata" />
+          <button type="button" onClick={clearPicked} aria-label="Remove video">✕</button>
         </div>
       )}
       <form className="chat-input" onSubmit={handleSend}>
-        <input ref={fileRef} type="file" accept="image/*" onChange={pickPhoto} hidden />
-        {!recording && <button type="button" className="chat-attach" onClick={() => fileRef.current && fileRef.current.click()} disabled={sending} aria-label="Add a photo">📷</button>}
+        <input ref={fileRef} type="file" accept="image/*,video/*" onChange={pickPhoto} hidden />
+        {!recording && <button type="button" className="chat-attach" onClick={() => fileRef.current && fileRef.current.click()} disabled={sending} aria-label="Add a photo or video">📷</button>}
         {!recording && <button type="button" className="chat-attach chat-gif" onClick={() => setGifOpen((o) => !o)} disabled={sending} aria-label="Send a GIF">GIF</button>}
         <VoiceRecorder
           disabled={sending}
@@ -164,7 +203,7 @@ export default function Home() {
           rows={1}
           disabled={sending}
         />}
-        {!recording && <button type="submit" disabled={sending || (!input.trim() && !photo)}>
+        {!recording && <button type="submit" disabled={sending || (!input.trim() && !photo && !clip)}>
           Send
         </button>}
       </form>

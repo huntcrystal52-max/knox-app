@@ -2,8 +2,9 @@
 //   [GIF: what he searched](https://…giphy.com/…)  — a GIF Knox chose
 //   [Image](https://…)                               — a photo she sent, or a picture he made
 //   [Voice note](/api/voice/12)                      — a voice note (hers or his), with a player
+//   [Video](https://res.cloudinary.com/…)            — a video she sent from her phone
 // Only https links (and the app's own voice notes) are drawn; anything else stays as plain text.
-const GIF = /\[(GIF:\s*[^\]]{1,80}|Image|Voice note)\]\((https:\/\/[^)\s]+|\/api\/voice\/\d+)\)/gi;
+const GIF = /\[(GIF:\s*[^\]]{1,80}|Image|Voice note|Video)\]\((https:\/\/[^)\s]+|\/api\/voice\/\d+)\)/gi;
 const API_URL = import.meta.env.DEV ? 'http://localhost:3001' : '';
 
 export default function MessageText({ text }) {
@@ -19,6 +20,14 @@ export default function MessageText({ text }) {
       else parts.push(m[0]);
       last = m.index + m[0].length;
       while (t[last] === '\n') last++; // the player sits on its own line already
+      GIF.lastIndex = last;
+      continue;
+    }
+    if (m[1] === 'Video') {
+      if (/^https:\/\/res\.cloudinary\.com\//.test(m[2])) parts.push(<video key={m.index} className="msg-video" controls playsInline preload="metadata" src={m[2]} />);
+      else parts.push(m[0]);
+      last = m.index + m[0].length;
+      while (t[last] === '\n') last++;
       GIF.lastIndex = last;
       continue;
     }

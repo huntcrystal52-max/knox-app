@@ -28,8 +28,28 @@ export const api = {
 
   // Home room chat — talks to Knox's actual brain via the backend relay.
   getChatHistory: () => request('/api/chat/history'),
-  sendChatMessage: (message, imageUrl, voiceClipId = null) =>
-    request('/api/chat/message', { method: 'POST', body: JSON.stringify({ message, imageUrl, voiceClipId }) }),
+  sendChatMessage: (message, imageUrl, voiceClipId = null, video = null) =>
+    request('/api/chat/message', { method: 'POST', body: JSON.stringify({ message, imageUrl, voiceClipId, videoUrl: video && video.url, videoLength: video && video.length }) }),
+  // Videos go straight from the phone to Cloudinary (too big for our server);
+  // the server only signs the upload. Returns { url, length }.
+  uploadVideo: async (file, onProgress) => {
+    const sig = await request('/api/upload/video-signature');
+    const form = new FormData();
+    form.append('file', file);
+    form.append('api_key', sig.apiKey);
+    form.append('timestamp', String(sig.timestamp));
+    form.append('folder', sig.folder);
+    form.append('signature', sig.signature);
+    const result = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${sig.cloudName}/video/upload`);
+      xhr.upload.onprogress = (e) => { if (onProgress && e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)); };
+      xhr.onload = () => { try { const d = JSON.parse(xhr.responseText); (xhr.status < 300 && d.secure_url) ? resolve(d) : reject(new Error((d.error && d.error.message) || 'Upload failed')); } catch (e) { reject(e); } };
+      xhr.onerror = () => reject(new Error('Upload failed'));
+      xhr.send(form);
+    });
+    return { url: result.secure_url, length: result.duration || null };
+  },
   // Voice notes: keeps a recording (data URI) → { id }.
   uploadVoice: (dataUri) =>
     request('/api/voice', { method: 'POST', body: JSON.stringify({ audio: dataUri }) }),
