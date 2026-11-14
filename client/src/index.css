@@ -1040,3 +1040,9 @@ body {
 .advent-tools .voice-recording { flex-basis: 100%; }
 .advent-open { width: 100%; padding: 0.8rem; font-size: 1rem; margin: 6px 0; }
 .advent-reaction { border-left: 3px solid var(--accent); padding-left: 10px; margin-top: 8px; white-space: pre-wrap; }
+
+/* Home chat bar: the text box gets its own full-width row on top,
+   with 📷 GIF 🎙 on the left underneath and Send on the right. */
+.chat-input { flex-wrap: wrap; align-items: center; }
+.chat-input textarea { order: -1; flex: 1 1 100%; min-height: 2.8rem; }
+.chat-input button[type="submit"] { margin-left: auto; }
